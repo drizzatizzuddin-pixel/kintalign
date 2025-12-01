@@ -5,98 +5,247 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Plaque Score Generator</title>
 <style>
-body { font-family: Arial, sans-serif; margin: 20px; }
-h2 { text-align: center; }
-.quadrant-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-.quadrant { border: 1px solid #ccc; border-radius: 8px; padding: 10px; min-width: 220px; }
-.quadrant h3 { text-align: center; margin-top: 0; }
-.tooth { border: 1px solid #ddd; border-radius: 6px; padding: 6px; margin: 6px; text-align: center; }
-.surfaces { display: grid; grid-template-columns: repeat(2, 50px); grid-template-rows: repeat(2, 50px); gap: 5px; justify-content: center; margin-top: 6px; }
-.surface { width: 50px; height: 50px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 4px; user-select: none; }
-.surface.clicked { background: purple !important; color: white; }
-.surface.missing { background: #a9a9a9 !important; pointer-events: none; color: white; }
-.missing-button { margin-top: 6px; padding: 4px 8px; cursor: pointer; border-radius: 5px; background: #ccc; font-size: 12px; }
-#score { text-align: center; margin-top: 20px; font-size: 18px; }
-@media(max-width: 768px) { .quadrant-container { flex-direction: column; align-items: center; } }
+/* --- 1. Global Styles --- */
+body { 
+    font-family: Arial, sans-serif; 
+    margin: 20px; 
+    user-select: none; /* Prevents text selection while clicking */
+}
+h2, #score { 
+    text-align: center; 
+}
+#score {
+    margin-top: 20px; 
+    font-size: 18px; 
+    font-weight: bold;
+}
+
+/* --- 2. Chart Layout (Using Flexbox and Grid) --- */
+.dental-chart-container {
+    max-width: 800px;
+    margin: 40px auto 0;
+    /* Use a grid to stack the upper and lower arches */
+    display: grid;
+    gap: 20px; 
+}
+
+.arch {
+    display: flex;
+    justify-content: center;
+}
+
+.quadrant {
+    display: flex; /* Arranges teeth horizontally */
+    /* Add a visual break between quadrants/midline */
+    padding: 0 5px; 
+}
+
+/* Reverse order for the Right side to flow correctly (Molar -> Midline) */
+.quadrant.right {
+    flex-direction: row-reverse;
+}
+
+/* --- 3. Tooth Styling --- */
+.tooth {
+    position: relative;
+    width: 30px; 
+    height: 30px; 
+    margin: 0 1px;
+    box-sizing: content-box; 
+    
+    /* Make the tooth a grid container for its 4 surfaces */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    border: 1px solid black;
+    
+    /* Optional: Slight hover effect */
+    transition: transform 0.1s ease;
+}
+.tooth:hover {
+    transform: scale(1.05);
+}
+
+
+/* Surface Styling (Clickable areas inside the tooth square) */
+.surface {
+    /* M=Mesial, D=Distal, B=Buccal/Facial, L/P=Lingual/Palatal */
+    cursor: pointer;
+    background-color: white; 
+    border: 1px solid #ccc;
+    transition: background-color 0.1s;
+}
+
+.surface.plaque {
+    /* Color for scored plaque (purple/red dot style) */
+    background-color: #990099; 
+}
+
+/* Missing Tooth Styling */
+.tooth.missing {
+    opacity: 0.5;
+    pointer-events: none; /* Disable clicking on surfaces */
+}
+.tooth.missing .surface {
+    background-color: #a9a9a9 !important;
+    border-color: #777;
+    cursor: default;
+}
+
+/* --- 4. Numbering (Labels) --- */
+.number-label {
+    position: absolute;
+    font-size: 10px;
+    width: 100%;
+    text-align: center;
+    line-height: 1;
+    font-weight: normal;
+}
+
+.upper-arch .number-label {
+    top: -15px;
+}
+
+.lower-arch .number-label {
+    bottom: -15px;
+}
 </style>
 </head>
 <body>
-<h2>Plaque Score Generator</h2>
-<div class="quadrant-container" id="quadrants"></div>
+
+<h2>Dental Plaque Chart (Click to Mark Plaque)</h2>
+
+<div class="dental-chart-container">
+    <div class="arch upper-arch">
+        <div class="quadrant right" id="q1"></div>
+        <div class="quadrant left" id="q2"></div>
+    </div>
+
+    <div class="arch lower-arch">
+        <div class="quadrant right" id="q4"></div>
+        <div class="quadrant left" id="q3"></div>
+    </div>
+</div>
+
 <h3 id="score">Plaque Score: 0%</h3>
+
+<div style="text-align: center; margin-top: 15px; font-size: 14px;">
+    **Right-click or Long-press** on a tooth to toggle its **Missing** status.
+</div>
+
 <script>
-const quadrants = [
-  { name: 'Upper Right', start: 1, end: 8 },
-  { name: 'Upper Left', start: 9, end: 16 },
-  { name: 'Lower Left', start: 17, end: 24 },
-  { name: 'Lower Right', start: 25, end: 32 }
-];
+const toothData = {
+    'q1': [18, 17, 16, 15, 14, 13, 12, 11], // Upper Right (Molar to Incisor)
+    'q2': [21, 22, 23, 24, 25, 26, 27, 28], // Upper Left (Incisor to Molar)
+    'q3': [31, 32, 33, 34, 35, 36, 37, 38], // Lower Left (Incisor to Molar)
+    'q4': [41, 42, 43, 44, 45, 46, 47, 48]  // Lower Right (Incisor to Molar)
+};
+
+// M=Mesial, D=Distal, B=Buccal/Facial, L=Lingual/Palatal
+const surfacesMap = ['M', 'D', 'B', 'L']; 
 
 let surfacesClicked = 0;
-let missingTeeth = new Set();
-const totalSurfaces = 32 * 4;
+let validSurfaces = 0;
+
+function generateChart() {
+    const quadrants = document.querySelectorAll('.quadrant');
+
+    quadrants.forEach(quad => {
+        const qId = quad.id;
+        const teeth = toothData[qId];
+
+        teeth.forEach(tNum => {
+            const toothDiv = document.createElement('div');
+            toothDiv.className = 'tooth';
+            toothDiv.id = `t${tNum}`;
+            
+            // Add the Tooth Number Label
+            const numLabel = document.createElement('span');
+            numLabel.className = 'number-label';
+            numLabel.textContent = tNum;
+            toothDiv.appendChild(numLabel);
+
+            // Add the Surfaces (The 4 quadrants inside the tooth square)
+            surfacesMap.forEach(key => {
+                const surfaceDiv = document.createElement('div');
+                surfaceDiv.className = 'surface';
+                surfaceDiv.id = `${tNum}-${key}`;
+                surfaceDiv.onclick = () => toggleSurface(tNum, `${tNum}-${key}`);
+                toothDiv.appendChild(surfaceDiv);
+                validSurfaces++; // Count all 4 surfaces for initial total
+            });
+            
+            // Add right-click listener to toggle 'missing' status
+            toothDiv.oncontextmenu = (e) => {
+                e.preventDefault(); 
+                toggleMissing(tNum);
+            };
+
+            quad.appendChild(toothDiv);
+        });
+    });
+
+    // Simulate the single marked tooth from your image (Tooth 44)
+    // You can remove this block if you want a clean start
+    // Note: Since the exact surface is unclear, we'll mark the distal (D) surface as an example.
+    const initialMarkedSurface = document.getElementById('44-D');
+    if (initialMarkedSurface) {
+        initialMarkedSurface.classList.add('plaque');
+        surfacesClicked++;
+    }
+
+
+    updateScore(); // Initial score update
+}
 
 function updateScore() {
-  let validSurfaces = totalSurfaces - missingTeeth.size * 4;
-  let percent = validSurfaces === 0 ? 0 : Math.round((surfacesClicked / validSurfaces) * 100);
-  document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
+    const surfacesWithPlaque = document.querySelectorAll('.surface.plaque').length;
+    
+    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
+    document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
 }
 
-function toggleSurface(tooth, id) {
-  const elem = document.getElementById(id);
-  if (elem.classList.contains('clicked')) {
-    elem.classList.remove('clicked');
-    surfacesClicked--;
-  } else {
-    elem.classList.add('clicked');
-    surfacesClicked++;
-  }
-  updateScore();
-}
+function toggleSurface(toothNum, id) {
+    const elem = document.getElementById(id);
 
-function toggleMissing(tooth) {
-  const toothDiv = document.getElementById(`tooth-${tooth}`);
-  const surfaces = toothDiv.querySelectorAll('.surface');
-  if (missingTeeth.has(tooth)) {
-    missingTeeth.delete(tooth);
-    surfaces.forEach(s => s.classList.remove('missing'));
-  } else {
-    missingTeeth.add(tooth);
-    surfaces.forEach(s => {
-      if (s.classList.contains('clicked')) {
-        s.classList.remove('clicked');
+    // Prevent clicking if the tooth is missing (CSS handles this via pointer-events: none, but good to double-check)
+    if (elem.closest('.tooth').classList.contains('missing')) return;
+
+    if (elem.classList.contains('plaque')) {
+        elem.classList.remove('plaque');
         surfacesClicked--;
-      }
-      s.classList.add('missing');
-    });
-  }
-  updateScore();
+    } else {
+        elem.classList.add('plaque');
+        surfacesClicked++;
+    }
+    updateScore();
 }
 
-const container = document.getElementById('quadrants');
+function toggleMissing(toothNum) {
+    const toothDiv = document.getElementById(`t${toothNum}`);
+    
+    if (toothDiv.classList.contains('missing')) {
+        // Restore tooth
+        toothDiv.classList.remove('missing');
+        validSurfaces += 4; // Add back 4 surfaces
+    } else {
+        // Mark as missing
+        // Clear any plaque and subtract from the valid total
+        const surfaces = toothDiv.querySelectorAll('.surface');
+        surfaces.forEach(s => {
+            if (s.classList.contains('plaque')) {
+                s.classList.remove('plaque');
+                surfacesClicked--;
+            }
+        });
+        toothDiv.classList.add('missing');
+        validSurfaces -= 4; // Subtract 4 surfaces
+    }
+    updateScore();
+}
 
-quadrants.forEach(q => {
-  const quadDiv = document.createElement('div');
-  quadDiv.className = 'quadrant';
-  quadDiv.innerHTML = `<h3>${q.name}</h3>`;
-  for (let t = q.start; t <= q.end; t++) {
-    const toothDiv = document.createElement('div');
-    toothDiv.className = 'tooth';
-    toothDiv.id = `tooth-${t}`;
-    toothDiv.innerHTML = `
-      <strong>Tooth ${t}</strong>
-      <div class='surfaces'>
-        <div class='surface' id='${t}-M' onclick='toggleSurface(${t}, "${t}-M")'>M</div>
-        <div class='surface' id='${t}-D' onclick='toggleSurface(${t}, "${t}-D")'>D</div>
-        <div class='surface' id='${t}-B' onclick='toggleSurface(${t}, "${t}-B")'>B</div>
-        <div class='surface' id='${t}-L' onclick='toggleSurface(${t}, "${t}-L")'>L</div>
-      </div>
-      <button class='missing-button' onclick='toggleMissing(${t})'>Missing</button>
-    `;
-    quadDiv.appendChild(toothDiv);
-  }
-  container.appendChild(quadDiv);
-});
+// Draw the chart when the page loads
+generateChart();
 </script>
 </body>
 </html>
