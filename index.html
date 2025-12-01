@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plaque Score Generator (SVG Geometry Ready)</title>
+<title>Plaque Score Generator (SVG Functional)</title>
 <style>
 /* --- 1. Global Styles --- */
 body { 
@@ -138,128 +138,9 @@ function isPosterior(tNum) {
 }
 
 // ----------------------------------------------------------------------
-// --- PLACEHOLDER SVG DATA --- (Replace these with your actual geometry)
-// NOTE: These simple squares will not produce the required complex trapezoid shapes.
+// --- GENERIC SVG PATH DATA (FUNCTIONAL PLACEHOLDERS) ---
+// These path strings define the shape and geometry of the surfaces.
 const antSVGPathData = {
-    // This is a simple 2x2 grid. Replace with complex trapezoids.
-    M: "M0 0 L50 0 L50 50 L0 50 Z",
-    D: "M50 0 L100 0 L100 50 L50 50 Z",
-    B: "M0 50 L50 50 L50 100 L0 100 Z",
-    L: "M50 50 L100 50 L100 100 L50 100 Z"
-};
-
-const postSVGPathData = {
-    // This is a 2x2 grid with a central circle. Replace with complex trapezoids/quadrilaterals.
-    M: "M0 0 L50 0 L50 50 L0 50 Z",
-    D: "M50 0 L100 0 L100 50 L50 50 Z",
-    B: "M0 50 L50 50 L50 100 L0 100 Z",
-    L: "M50 50 L100 50 L100 100 L50 100 Z",
-    O: "M40 40 A10 10 0 1 0 60 40 A10 10 0 1 0 40 40 Z" // Central circle
-};
-// ----------------------------------------------------------------------
-
-function getToothSVG(tNum) {
-    const isPost = isPosterior(tNum);
-    const surfaces = isPost ? surfacesPost : surfacesAnt;
-    const pathData = isPost ? postSVGPathData : antSVGPathData;
-    
-    let svgContent = `<svg class="tooth-diagram" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">`;
-
-    surfaces.forEach(key => {
-        const id = `${tNum}-${key}`;
-        const d = pathData[key];
-        svgContent += `<path id="${id}" class="surface-path" data-surface="${key}" d="${d}" onclick="toggleSurface('${id}')"></path>`;
-    });
-
-    svgContent += `</svg>`;
-    return svgContent;
-}
-
-function generateChart() {
-    const quadrants = document.querySelectorAll('.quadrant');
-
-    quadrants.forEach(quad => {
-        const teeth = toothData[quad.id];
-
-        teeth.forEach(tNum => {
-            const isPost = isPosterior(tNum);
-            const toothDiv = document.createElement('div');
-            toothDiv.className = `tooth ${isPost ? 'posterior' : 'anterior'}`;
-            toothDiv.id = `t${tNum}`;
-            
-            // 1. Add Tooth Number Label
-            const numLabel = document.createElement('span');
-            numLabel.className = 'number-label';
-            numLabel.textContent = tNum;
-            toothDiv.appendChild(numLabel);
-
-            // 2. Add SVG Diagram
-            toothDiv.innerHTML += getToothSVG(tNum);
-
-            // 3. Add event listeners
-            toothDiv.oncontextmenu = (e) => {
-                e.preventDefault(); 
-                toggleMissing(tNum);
-            };
-
-            // 4. Update valid surfaces count
-            validSurfaces += isPost ? surfacesPost.length : surfacesAnt.length;
-            quad.appendChild(toothDiv);
-        });
-    });
-    updateScore();
-}
-
-function updateScore() {
-    // Count surfaces based on the SVG path elements with the 'plaque' class
-    const surfacesWithPlaque = document.querySelectorAll('.surface-path.plaque').length;
-    
-    // Calculation: Total Plaque / (Total Possible Surfaces - Surfaces of Missing Teeth)
-    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
-    document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
-}
-
-function toggleSurface(id) {
-    const elem = document.getElementById(id); // This is the SVG path element
-    const toothDiv = elem.closest('.tooth');
-
-    if (toothDiv.classList.contains('missing')) return;
-
-    if (elem.classList.contains('plaque')) {
-        elem.classList.remove('plaque');
-        surfacesClicked--;
-    } else {
-        elem.classList.add('plaque');
-        surfacesClicked++;
-    }
-    updateScore();
-}
-
-function toggleMissing(toothNum) {
-    const toothDiv = document.getElementById(`t${toothNum}`);
-    const surfaceCount = isPosterior(toothNum) ? surfacesPost.length : surfacesAnt.length;
-    
-    if (toothDiv.classList.contains('missing')) {
-        // --- RESTORE tooth (undo missing) ---
-        toothDiv.classList.remove('missing');
-        validSurfaces += surfaceCount; 
-    } else {
-        // --- MARK AS MISSING ---
-        // Clear any plaque and subtract from the valid total
-        const surfaces = toothDiv.querySelectorAll('.surface-path');
-        surfaces.forEach(s => {
-            if (s.classList.contains('plaque')) {
-                s.classList.remove('plaque');
-                surfacesClicked--;
-            }
-        });
-        toothDiv.classList.add('missing');
-        validSurfaces -= surfaceCount; 
-    }
-    updateScore();
-}
-
-generateChart();
-</script>
-</body>
-</html>
+    // 4-Surface Anterior Tooth (Simple Trapezoid/Quad view)
+    M: "M50 0 L0 10 L0 90 L50 100 L50 0 Z",
+    D: "M50 0 L100 10 L100 90 L50 100 L50
