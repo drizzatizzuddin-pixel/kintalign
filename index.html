@@ -19,6 +19,7 @@ h2, #score {
     margin-top: 20px; 
     font-size: 18px; 
     font-weight: bold;
+    color: darkred; 
 }
 
 /* --- 2. Chart Layout & Centering --- */
@@ -39,8 +40,6 @@ h2, #score {
     padding: 0 5px; 
 }
 .quadrant.right {
-    /* CRITICAL FIX: This reverses the visual display order of children (11, 12, ... 18) 
-       to produce the correct final order (18, 17, ... 11) */
     flex-direction: row-reverse;
 }
 
@@ -110,13 +109,13 @@ h2, #score {
     grid-area: 3 / 2 / 5 / 4;
 }
 
-/* --- 5. Plaque Marking & Missing Status --- */
+/* --- 5. Plaque Marking & Missing Status FIX --- */
 .surface.plaque {
     background-color: #990099; 
 }
 .tooth.missing {
     opacity: 0.5;
-    pointer-events: none; 
+    /* REMOVED: pointer-events: none; so that right-click to UNDO can register */
 }
 .tooth.missing .surface {
     background-color: #a9a9a9 !important;
@@ -134,6 +133,23 @@ h2, #score {
 }
 .upper-arch .number-label { top: -15px; }
 .lower-arch .number-label { bottom: -15px; }
+
+/* --- Button Styling --- */
+#generateButton {
+    margin-top: 30px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+#generateButton:hover {
+    background-color: #45a049;
+}
 </style>
 </head>
 <body>
@@ -151,22 +167,23 @@ h2, #score {
     </div>
 </div>
 
+<button id="generateButton" onclick="generateScore()">Generate Plaque Score</button>
 <h3 id="score">Plaque Score: 0%</h3>
 
 <div style="text-align: center; margin-top: 15px; font-size: 14px;">
     **Right-click** on a tooth to toggle its **Missing** status (and to undo it).
 </div>
 <div style="text-align: center; margin-top: 5px; font-size: 14px; color: red;">
-    **Please click on the missing teeth first before clicking on plaque stained surfaces.**
+    **Right-click once to mark missing, and right-click a second time on the gray area to restore.**
 </div>
 
 <script>
 const toothData = {
-    // FIX: Elements placed in DOM order 11 -> 18. CSS will reverse this to 18 -> 11.
+    // Q1: DOM order 11-18. CSS reverses to 18-11.
     'q1': [11, 12, 13, 14, 15, 16, 17, 18], 
     'q2': [21, 22, 23, 24, 25, 26, 27, 28],
     'q3': [31, 32, 33, 34, 35, 36, 37, 38],
-    // FIX: Elements placed in DOM order 41 -> 48. CSS will reverse this to 48 -> 41.
+    // Q4: DOM order 41-48. CSS reverses to 48-41.
     'q4': [41, 42, 43, 44, 45, 46, 47, 48] 
 };
 
@@ -175,7 +192,6 @@ const surfacesPost = ['M', 'D', 'B', 'L', 'O'];
 const surfacesAnt = ['M', 'D', 'B', 'L'];      
 
 let validSurfaces = 0; 
-let surfacesClicked = 0; 
 
 function isPosterior(tNum) {
     return posteriorTeeth.includes(tNum);
@@ -208,10 +224,12 @@ function generateChart() {
                 const surfaceDiv = document.createElement('div');
                 surfaceDiv.className = `surface ${key}`;
                 surfaceDiv.id = `${tNum}-${key}`;
-                surfaceDiv.onclick = () => toggleSurface(`${tNum}-${key}`);
+                // Clicks only toggle the plaque class
+                surfaceDiv.onclick = () => surfaceDiv.classList.toggle('plaque');
                 toothDiv.appendChild(surfaceDiv);
             });
 
+            // The right-click listener is on the main tooth div
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
@@ -221,29 +239,18 @@ function generateChart() {
             quad.appendChild(toothDiv);
         });
     });
-    updateScore();
+    // Initial score display
+    generateScore();
 }
 
-function updateScore() {
-    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesClicked / validSurfaces) * 100);
-    document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
-}
-
-function toggleSurface(id) {
-    const elem = document.getElementById(id);
-    const toothDiv = elem.closest('.tooth');
-
-    if (toothDiv.classList.contains('missing')) return;
-
-    if (elem.classList.contains('plaque')) {
-        elem.classList.remove('plaque');
-        surfacesClicked--; 
-    } else {
-        elem.classList.add('plaque');
-        surfacesClicked++; 
-    }
+// Function triggered by the button
+function generateScore() {
+    // 1. Get the numerator by counting all surfaces marked 'plaque' currently in the DOM
+    const surfacesWithPlaque = document.querySelectorAll('.surface.plaque').length;
     
-    updateScore(); 
+    // 2. Calculate the score using the current validSurfaces count
+    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
+    document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
 }
 
 function toggleMissing(toothNum) {
@@ -259,20 +266,17 @@ function toggleMissing(toothNum) {
         // --- MARK AS MISSING ---
         const surfaces = toothDiv.querySelectorAll('.surface');
         
-        // 1. Clean up plaque and adjust the numerator (surfacesClicked)
+        // 1. Clean up plaque 
         surfaces.forEach(s => {
-            if (s.classList.contains('plaque')) {
-                s.classList.remove('plaque');
-                surfacesClicked--; 
-            }
+            s.classList.remove('plaque');
         });
         
-        // 2. Mark the tooth as missing and adjust the denominator (validSurfaces)
+        // 2. Mark the tooth as missing and adjust the denominator
         toothDiv.classList.add('missing');
         validSurfaces -= surfaceCount; 
     }
     
-    updateScore();
+    // No score update here, the button must be pressed.
 }
 
 generateChart();
