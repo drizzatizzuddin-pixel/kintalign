@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plaque Score Generator</title>
+<title>Plaque Score Generator (Diagram Style)</title>
 <style>
 /* --- 1. Global Styles --- */
 body { 
     font-family: Arial, sans-serif; 
     margin: 20px; 
-    user-select: none; /* Prevents text selection while clicking */
+    user-select: none; 
 }
 h2, #score { 
     text-align: center; 
@@ -20,13 +20,13 @@ h2, #score {
     font-weight: bold;
 }
 
-/* --- 2. Chart Layout (Using Flexbox and Grid) --- */
+/* --- 2. Chart Layout --- */
 .dental-chart-container {
-    max-width: 800px;
+    max-width: 900px; /* Increased width to better fit the diagram */
     margin: 40px auto 0;
-    /* Use a grid to stack the upper and lower arches */
     display: grid;
     gap: 20px; 
+    padding: 0 10px;
 }
 
 .arch {
@@ -35,64 +35,196 @@ h2, #score {
 }
 
 .quadrant {
-    display: flex; /* Arranges teeth horizontally */
-    /* Add a visual break between quadrants/midline */
+    display: flex; 
     padding: 0 5px; 
 }
 
-/* Reverse order for the Right side to flow correctly (Molar -> Midline) */
 .quadrant.right {
     flex-direction: row-reverse;
 }
 
-/* --- 3. Tooth Styling --- */
+/* --- 3. Tooth Styling (Key to the Diagram Look) --- */
 .tooth {
     position: relative;
     width: 30px; 
     height: 30px; 
     margin: 0 1px;
     box-sizing: content-box; 
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+/* Outer Border (Buccal/Lingual Surfaces) */
+.buccal-lingual-surfaces {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.surface.buccal, .surface.lingual {
+    flex: 1;
+    height: 100%;
+    border: 1px solid black;
+    box-sizing: border-box;
+    z-index: 1;
+}
+.surface.buccal { 
+    border-right: none; 
+}
+.surface.lingual { 
+    border-left: none; 
+}
+
+/* The Central Diamond/Rectangle (Occlusal/Incisal and Mesial/Distal Surfaces) */
+.central-surfaces {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none; /* Pointer events handled by pseudo-elements/children */
+}
+
+/* --- Posterior Teeth (Molars/Premolars: 14-18, 24-28, 34-38, 44-48) - 5 Surfaces --- */
+.tooth.posterior .central-surfaces {
+    /* Diamond shape created using border triangles */
+    width: 0;
+    height: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     
-    /* Make the tooth a grid container for its 4 surfaces */
+    /* Creating the Mesial and Distal surfaces as triangles */
+    border-style: solid;
+    border-width: 15px; /* Half of tooth height/width */
+    border-color: transparent;
+    pointer-events: all; 
+}
+
+/* Mesial Surface (Top/Bottom border for the triangular look) */
+.tooth.posterior .surface.mesial {
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 15px;
+    /* This creates the top-left triangle */
+    border-color: transparent white white transparent; 
+    pointer-events: all;
+    z-index: 3;
+}
+/* Distal Surface (Top/Bottom border for the triangular look) */
+.tooth.posterior .surface.distal {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 15px;
+    /* This creates the top-right triangle */
+    border-color: white transparent white white; 
+    pointer-events: all;
+    z-index: 3;
+}
+/* Occlusal Surface (The center of the diamond) */
+.tooth.posterior .surface.occlusal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 5px; /* A small dot for the occlusal */
+    height: 5px;
+    background: white;
+    border: 1px solid black;
+    border-radius: 50%;
+    z-index: 4;
+}
+
+/* --- Anterior Teeth (Incisors/Canines: 11-13, 21-23, 31-33, 41-43) - 4 Surfaces --- */
+.tooth.anterior .central-surfaces {
+    width: 100%;
+    height: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
+    pointer-events: all;
+}
+.tooth.anterior .surface.mesial { 
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+    border: 1px solid black; 
+    background: white;
+    z-index: 3;
+}
+.tooth.anterior .surface.distal {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    border: 1px solid black; 
+    background: white;
+    z-index: 3;
+}
+/* Hide the buccal/lingual borders for the anteriors where they overlap the mesial/distal */
+.tooth.anterior .buccal-lingual-surfaces {
+    display: none;
+}
+/* Override: for anteriors, we only use the mesial/distal surfaces for the inner shape, 
+   and the buccal/lingual surfaces for the outer squares, giving the 4-square look. */
+.tooth.anterior {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    border: none; /* Outer border is handled by individual surfaces */
+}
+.tooth.anterior .surface {
     border: 1px solid black;
-    
-    /* Optional: Slight hover effect */
-    transition: transform 0.1s ease;
-}
-.tooth:hover {
-    transform: scale(1.05);
+    box-sizing: border-box;
+    background: white;
+    z-index: 2;
 }
 
 
-/* Surface Styling (Clickable areas inside the tooth square) */
-.surface {
-    /* M=Mesial, D=Distal, B=Buccal/Facial, L/P=Lingual/Palatal */
-    cursor: pointer;
-    background-color: white; 
-    border: 1px solid #ccc;
-    transition: background-color 0.1s;
-}
+/* --- Plaque Marking & Missing Status --- */
 
 .surface.plaque {
-    /* Color for scored plaque (purple/red dot style) */
-    background-color: #990099; 
+    background-color: #990099 !important; /* Purple plaque color */
 }
+
+/* Override for the triangular/diamond surfaces */
+.tooth.posterior .surface.mesial.plaque {
+    /* Need to change border color for triangles */
+    border-color: transparent #990099 #990099 transparent !important; 
+}
+.tooth.posterior .surface.distal.plaque {
+    border-color: #990099 transparent #990099 #990099 !important; 
+}
+.tooth.posterior .surface.occlusal.plaque {
+    background-color: #990099 !important;
+}
+
 
 /* Missing Tooth Styling */
 .tooth.missing {
     opacity: 0.5;
-    pointer-events: none; /* Disable clicking on surfaces */
+    pointer-events: none; 
 }
 .tooth.missing .surface {
     background-color: #a9a9a9 !important;
-    border-color: #777;
+    border-color: #777 !important;
     cursor: default;
 }
+.tooth.missing .surface.mesial, .tooth.missing .surface.distal {
+    /* Handle triangular missing state */
+    border-color: transparent #777 #777 transparent !important; 
+}
 
-/* --- 4. Numbering (Labels) --- */
+/* --- Numbering (Labels) --- */
 .number-label {
     position: absolute;
     font-size: 10px;
@@ -135,46 +267,68 @@ h2, #score {
 
 <script>
 const toothData = {
-    'q1': [18, 17, 16, 15, 14, 13, 12, 11], // Upper Right (Molar to Incisor)
-    'q2': [21, 22, 23, 24, 25, 26, 27, 28], // Upper Left (Incisor to Molar)
-    'q3': [31, 32, 33, 34, 35, 36, 37, 38], // Lower Left (Incisor to Molar)
-    'q4': [41, 42, 43, 44, 45, 46, 47, 48]  // Lower Right (Incisor to Molar)
+    'q1': [18, 17, 16, 15, 14, 13, 12, 11], 
+    'q2': [21, 22, 23, 24, 25, 26, 27, 28],
+    'q3': [31, 32, 33, 34, 35, 36, 37, 38],
+    'q4': [41, 42, 43, 44, 45, 46, 47, 48]
 };
 
-// M=Mesial, D=Distal, B=Buccal/Facial, L=Lingual/Palatal
-const surfacesMap = ['M', 'D', 'B', 'L']; 
+// Posterior teeth (Molars/Premolars) have 5 surfaces, Anteriors have 4
+const posteriorTeeth = [18, 17, 16, 15, 25, 26, 27, 28, 38, 37, 36, 35, 48, 47, 46, 45];
 
 let surfacesClicked = 0;
 let validSurfaces = 0;
+
+function isPosterior(tNum) {
+    return posteriorTeeth.includes(tNum);
+}
 
 function generateChart() {
     const quadrants = document.querySelectorAll('.quadrant');
 
     quadrants.forEach(quad => {
-        const qId = quad.id;
-        const teeth = toothData[qId];
+        const teeth = toothData[quad.id];
 
         teeth.forEach(tNum => {
+            const isPost = isPosterior(tNum);
             const toothDiv = document.createElement('div');
-            toothDiv.className = 'tooth';
+            toothDiv.className = `tooth ${isPost ? 'posterior' : 'anterior'}`;
             toothDiv.id = `t${tNum}`;
             
-            // Add the Tooth Number Label
+            // 1. Add Tooth Number Label
             const numLabel = document.createElement('span');
             numLabel.className = 'number-label';
             numLabel.textContent = tNum;
             toothDiv.appendChild(numLabel);
 
-            // Add the Surfaces (The 4 quadrants inside the tooth square)
-            surfacesMap.forEach(key => {
-                const surfaceDiv = document.createElement('div');
-                surfaceDiv.className = 'surface';
-                surfaceDiv.id = `${tNum}-${key}`;
-                surfaceDiv.onclick = () => toggleSurface(tNum, `${tNum}-${key}`);
-                toothDiv.appendChild(surfaceDiv);
-                validSurfaces++; // Count all 4 surfaces for initial total
-            });
+            // 2. Add Buccal/Lingual Surfaces (Outer square sides)
+            const blContainer = document.createElement('div');
+            blContainer.className = 'buccal-lingual-surfaces';
             
+            const buccal = createSurfaceDiv(tNum, 'B', 'buccal');
+            const lingual = createSurfaceDiv(tNum, 'L', 'lingual');
+            blContainer.appendChild(buccal);
+            blContainer.appendChild(lingual);
+            toothDiv.appendChild(blContainer);
+
+            // 3. Add Central Surfaces (Inner shapes)
+            const centerContainer = document.createElement('div');
+            centerContainer.className = 'central-surfaces';
+
+            const mesial = createSurfaceDiv(tNum, 'M', 'mesial');
+            const distal = createSurfaceDiv(tNum, 'D', 'distal');
+            centerContainer.appendChild(mesial);
+            centerContainer.appendChild(distal);
+
+            if (isPost) {
+                // 5th surface for Posteriors
+                const occlusal = createSurfaceDiv(tNum, 'O', 'occlusal');
+                centerContainer.appendChild(occlusal);
+                validSurfaces += 1;
+            } 
+            
+            toothDiv.appendChild(centerContainer);
+
             // Add right-click listener to toggle 'missing' status
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
@@ -182,20 +336,30 @@ function generateChart() {
             };
 
             quad.appendChild(toothDiv);
+            validSurfaces += 4; // B, L, M, D are always present
         });
     });
 
-    // Simulate the single marked tooth from your image (Tooth 44)
-    // You can remove this block if you want a clean start
-    // Note: Since the exact surface is unclear, we'll mark the distal (D) surface as an example.
+    // Simulate the single marked tooth from your image (Tooth 44-D)
     const initialMarkedSurface = document.getElementById('44-D');
     if (initialMarkedSurface) {
         initialMarkedSurface.classList.add('plaque');
         surfacesClicked++;
     }
 
+    updateScore();
+}
 
-    updateScore(); // Initial score update
+function createSurfaceDiv(tNum, key, className) {
+    const surfaceDiv = document.createElement('div');
+    surfaceDiv.className = `surface ${className}`;
+    surfaceDiv.id = `${tNum}-${key}`;
+    surfaceDiv.onclick = () => toggleSurface(tNum, `${tNum}-${key}`);
+    return surfaceDiv;
+}
+
+function getToothSurfaceCount(tNum) {
+    return isPosterior(tNum) ? 5 : 4;
 }
 
 function updateScore() {
@@ -208,7 +372,6 @@ function updateScore() {
 function toggleSurface(toothNum, id) {
     const elem = document.getElementById(id);
 
-    // Prevent clicking if the tooth is missing (CSS handles this via pointer-events: none, but good to double-check)
     if (elem.closest('.tooth').classList.contains('missing')) return;
 
     if (elem.classList.contains('plaque')) {
@@ -223,14 +386,14 @@ function toggleSurface(toothNum, id) {
 
 function toggleMissing(toothNum) {
     const toothDiv = document.getElementById(`t${toothNum}`);
+    const surfaceCount = getToothSurfaceCount(toothNum);
     
     if (toothDiv.classList.contains('missing')) {
         // Restore tooth
         toothDiv.classList.remove('missing');
-        validSurfaces += 4; // Add back 4 surfaces
+        validSurfaces += surfaceCount; 
     } else {
         // Mark as missing
-        // Clear any plaque and subtract from the valid total
         const surfaces = toothDiv.querySelectorAll('.surface');
         surfaces.forEach(s => {
             if (s.classList.contains('plaque')) {
@@ -239,7 +402,7 @@ function toggleMissing(toothNum) {
             }
         });
         toothDiv.classList.add('missing');
-        validSurfaces -= 4; // Subtract 4 surfaces
+        validSurfaces -= surfaceCount; 
     }
     updateScore();
 }
