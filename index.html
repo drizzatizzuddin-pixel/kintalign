@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KintAlign — Plaque Score Prototype</title>
+  <style>
+    :root{--size:64px;--gap:8px}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,\"Helvetica Neue\",Arial;margin:18px;color:#111}
+    h1{font-size:18px;margin:0 0 12px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    button,select{padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:white;cursor:pointer}
+    .chart{display:flex;flex-direction:column;gap:14px}
+    .arch{display:flex;gap:var(--gap);justify-content:center;flex-wrap:wrap}
+    .tooth{width:var(--size);height:var(--size);position:relative;border-radius:6px;border:1px solid #ddd;box-shadow:0 1px 0 rgba(0,0,0,0.02);overflow:hidden}
+    .half{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+    .half.buccal{clip-path:polygon(0 0,60% 0,60% 100%,0 100%);background:linear-gradient(180deg, #fff, #fafafa)}
+    .half.lingual{clip-path:polygon(40% 0,100% 0,100% 100%,40% 100%);background:linear-gradient(180deg,#fff,#fafafa)}
+    .state-0{opacity:0.04}
+    .state-1{background:linear-gradient(180deg,#ffdede,#ffcccc);opacity:1}
+    .state-2{background:linear-gradient(180deg,#ffb3b3,#ff8c8c);opacity:1}
+    .legend{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .legend span{display:inline-flex;align-items:center;gap:6px}
+    .sw{width:18px;height:14px;border-radius:3px;border:1px solid #bbb}
+    .result{margin-top:12px;padding:10px;border-radius:8px;background:#f7f7fb;border:1px solid #eee}
+    .small{font-size:13px;color:#444}
+    .footer{margin-top:14px;font-size:12px;color:#666}
+    @media(max-width:640px){:root{--size:52px}}
+  </style>
+</head>
+<body>
+  <h1>Plaque Score Prototype — KintAlign</h1>
+  <div class="controls">
+    <button id="clearBtn">Clear all</button>
+    <button id="autoFillBtn">Random demo</button>
+    <select id="modeSelect" title="Scoring mode">
+      <option value="binary">Binary (surface present = 1)</option>
+      <option value="graded">Graded (0/1/2)</option>
+    </select>
+    <button id="calcBtn">Generate score</button>
+    <button id="exportBtn">Export JSON</button>
+    <button id="printBtn">Print</button>
+  </div>
+
+  <div class="chart" role="application" aria-label="Tooth surface selector">
+    <div><strong class="small">Upper arch (maxilla)</strong></div>
+    <div id="upper" class="arch" aria-hidden="false"></div>
+
+    <div><strong class="small">Lower arch (mandible)</strong></div>
+    <div id="lower" class="arch" aria-hidden="false"></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:linear-gradient(180deg,#fff,#fafafa);opacity:0.04;border:1px solid #ddd"></span> No plaque</span>
+    <span><span class="sw" style="background:linear-gradient(180deg,#ffdede,#ffcccc)"></span> Light</span>
+    <span><span class="sw" style="background:linear-gradient(180deg,#ffb3b3,#ff8c8c)"></span> Heavy</span>
+  </div>
+
+  <div class="result" id="result">
+    <div><strong>Score:</strong> <span id="scoreText">—</span></div>
+    <div class="small">Surfaces marked: <span id="markedCount">0</span> / <span id="totalSurfaces">64</span></div>
+    <div class="small">Percent plaque coverage (by surface): <span id="percentText">—</span></div>
+  </div>
+
+  <div class="footer">
+    Tip: use the <em>mode</em> dropdown to switch between a binary surface presence score and a 3-level graded score (0/1/2). This is a prototype — include staining and consistent lighting for clinical use.
+  </div>
+
+<script>
+// Configuration
+const TEETH_TOTAL = 32; // full adult set; change if you want
+const SURFACES_PER_TOOTH = 2; // buccal & lingual in this prototype
+const totalSurfaces = TEETH_TOTAL * SURFACES_PER_TOOTH;
+
+// Build UI
+const upper = document.getElementById('upper');
+const lower = document.getElementById('lower');
+const modeSelect = document.getElementById('modeSelect');
+const scoreText = document.getElementById('scoreText');
+const percentText = document.getElementById('percentText');
+const markedCountEl = document.getElementById('markedCount');
+const totalSurfacesEl = document.getElementById('totalSurfaces');
+
+totalSurfacesEl.textContent = totalSurfaces;
+
+function createToothElement(index){
+  const tooth = document.createElement('div');
+  tooth.className = 'tooth';
+  tooth.dataset.tooth = index;
+  tooth.innerHTML = `
+    <div class="half buccal state-0" data-surface="buccal" title="Buccal/Facial">B</div>
+    <div class="half lingual state-0" data-surface="lingual" title="Lingual/Palatal">L</div>
+  `;
+
+  // click handlers
+  tooth.querySelectorAll('.half').forEach(el => {
+    el.addEventListener('click', (e)=>{
+      toggleSurfaceState(el);
+    });
+  });
+
+  return tooth;
+}
+
+function toggleSurfaceState(el){
+  const mode = modeSelect.value;
+  // states cycling: 0 -> 1 -> (2 -> 0) for graded; 0 -> 1 -> 0 for binary
+  const classes = Array.from(el.classList);
+  let state = classes.find(c=>c.startsWith('state-')) || 'state-0';
+  let n = parseInt(state.split('-')[1]);
+  if(mode==='binary'){
+    n = n===0?1:0;
+  }else{
+    n = (n+1) % 3; // 0->1->2->0
+  }
+  el.classList.remove('state-0','state-1','state-2');
+  el.classList.add('state-'+n);
+}
+
+// populate teeth
+function populate(){
+  upper.innerHTML = '';
+  lower.innerHTML = '';
+  // simple distribution: 16 upper (1..16), 16 lower (17..32)
+  for(let i=1;i<=16;i++) upper.appendChild(createToothElement(i));
+  for(let i=17;i<=32;i++) lower.appendChild(createToothElement(i));
+}
+
+populate();
+
+// Controls
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.half').forEach(h=>{h.classList.remove('state-1','state-2');h.classList.add('state-0');});
+  updateResult();
+});
+
+document.getElementById('autoFillBtn').addEventListener('click', ()=>{
+  // random demo
+  document.querySelectorAll('.half').forEach(h=>{
+    const r = Math.random();
+    if(modeSelect.value==='binary'){
+      h.classList.remove('state-0','state-1');h.classList.add(r>0.6?'state-1':'state-0');
+    }else{
+      h.classList.remove('state-0','state-1','state-2');
+      const pick = r>0.8?2:(r>0.55?1:0);
+      h.classList.add('state-'+pick);
+    }
+  });
+  updateResult();
+});
+
+document.getElementById('calcBtn').addEventListener('click', ()=> updateResult());
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const payload = gatherData();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'plaque-score.json'; a.click(); URL.revokeObjectURL(url);
+});
+
+document.getElementById('printBtn').addEventListener('click', ()=>{
+  window.print();
+});
+
+modeSelect.addEventListener('change', ()=>{ // optionally reset graded->binary differences
+  // leave states as-is; user can clear
+});
+
+function gatherData(){
+  const halves = Array.from(document.querySelectorAll('.tooth'));
+  const data = {created: new Date().toISOString(), teeth: []};
+  halves.forEach(t=>{
+    const id = parseInt(t.dataset.tooth,10);
+    const bucc = t.querySelector('.half.buccal');
+    const ling = t.querySelector('.half.lingual');
+    const s = {
+      tooth: id,
+      buccal: parseInt((bucc.className.match(/state-(\d)/)||[0,0])[1]||0,10),
+      lingual: parseInt((ling.className.match(/state-(\d)/)||[0,0])[1]||0,10)
+    };
+    data.teeth.push(s);
+  });
+  return data;
+}
+
+function updateResult(){
+  const mode = modeSelect.value;
+  const allHalves = document.querySelectorAll('.half');
+  let marked = 0;
+  let weightSum = 0;
+  allHalves.forEach(h=>{
+    const m = parseInt((h.className.match(/state-(\d)/)||[0,0])[1]||0,10);
+    if(mode==='binary'){
+      if(m>0) marked++;
+    }else{
+      // graded: treat 1 as 0.5, 2 as 1 for percentage
+      if(m>0) marked += (m===1?0.5:1);
+      weightSum += m; // for optional average
+    }
+  });
+
+  let percent;
+  if(mode==='binary') percent = (marked / totalSurfaces) * 100;
+  else percent = (marked / totalSurfaces) * 100;
+
+  scoreText.textContent = (mode==='binary')? ( (marked) + ' positive surfaces' ) : ( weightSum + ' graded points');
+  percentText.textContent = percent.toFixed(1) + '%';
+  markedCountEl.textContent = Math.round(marked*10)/10;
+}
+
+// live update for UX
+setInterval(()=>updateResult(),500);
+
+</script>
+</body>
+</html>
