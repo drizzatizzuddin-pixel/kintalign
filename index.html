@@ -10,6 +10,7 @@ body {
     font-family: Arial, sans-serif; 
     margin: 20px; 
     user-select: none; 
+    text-align: center; /* Helper for centering main content */
 }
 h2, #score { 
     text-align: center; 
@@ -20,24 +21,24 @@ h2, #score {
     font-weight: bold;
 }
 
-/* --- 2. Chart Layout & Centering --- */
+/* --- 2. Chart Layout & Centering FIX --- */
 .dental-chart-container {
     max-width: 900px;
-    margin: 40px auto 0; /* Centering the container */
+    margin: 40px auto 0; /* Ensures horizontal centering */
     display: grid;
     gap: 20px; 
     padding: 0 10px;
+    justify-content: center; 
 }
 .arch {
     display: flex;
-    justify-content: center;
+    justify-content: center; 
 }
 .quadrant {
     display: flex; 
     padding: 0 5px; 
 }
 .quadrant.right {
-    /* Q1 (Upper Right) and Q4 (Lower Right) must draw P-A (18 to 11, 48 to 41) */
     flex-direction: row-reverse;
 }
 
@@ -48,7 +49,7 @@ h2, #score {
     height: 64px; 
     margin: 0 2px;
     box-sizing: border-box; 
-    border: 1px solid black; /* Outer tooth border */
+    border: 1px solid black; 
     cursor: pointer;
     
     /* 4x4 Grid Definition */
@@ -58,7 +59,7 @@ h2, #score {
     background: white; 
 }
 
-/* --- 4. Surface Styling & Demarcation (Consistent Lines) --- */
+/* --- 4. Surface Styling & Demarcation --- */
 .surface {
     position: relative;
     background: white;
@@ -71,56 +72,40 @@ h2, #score {
 
 /* --- POSTERIOR TEETH (5 Surfaces) Grid Assignment & Demarcation --- */
 
-/* Mesial (M) - Full height column 1 */
 .tooth.posterior .surface.M { 
     grid-area: 1 / 1 / 5 / 2;
     border-right: 1px solid black; 
 } 
-
-/* Distal (D) - Full height column 4 */
 .tooth.posterior .surface.D { 
     grid-area: 1 / 4 / 5 / 5;
     border-left: 1px solid black; 
 }
-
-/* Buccal (B) - Row 1, Cols 2 & 3 */
 .tooth.posterior .surface.B { 
     grid-area: 1 / 2 / 2 / 4; 
     border-bottom: 1px solid black; 
 }
-
-/* Occlusal (O) - Rows 2 & 3, Cols 2 & 3 */
 .tooth.posterior .surface.O { 
     grid-area: 2 / 2 / 4 / 4; 
     border-bottom: 1px solid black; 
 }
-
-/* Lingual (L) - Row 4, Cols 2 & 3 */
 .tooth.posterior .surface.L { 
     grid-area: 4 / 2 / 5 / 4;
 }
 
 /* --- ANTERIOR TEETH (4 Surfaces) Grid Assignment & Demarcation --- */
 
-/* Mesial (M) - Full height column 1 */
 .tooth.anterior .surface.M { 
     grid-area: 1 / 1 / 5 / 2;
     border-right: 1px solid black; 
 } 
-
-/* Distal (D) - Full height column 4 */
 .tooth.anterior .surface.D { 
     grid-area: 1 / 4 / 5 / 5;
     border-left: 1px solid black; 
 }
-
-/* Buccal (B) - Rows 1 & 2, Cols 2 & 3 */
 .tooth.anterior .surface.B { 
     grid-area: 1 / 2 / 3 / 4; 
     border-bottom: 1px solid black; 
 }
-
-/* Lingual (L) - Rows 3 & 4, Cols 2 & 3 */
 .tooth.anterior .surface.L { 
     grid-area: 3 / 2 / 5 / 4;
 }
@@ -128,16 +113,13 @@ h2, #score {
 /* --- 5. Plaque Marking & Missing Status --- */
 
 .surface.plaque {
-    background-color: #990099; /* Solid purple fill */
+    background-color: #990099; 
 }
-
-/* Missing Tooth Styling */
 .tooth.missing {
     opacity: 0.5;
     pointer-events: none; 
 }
 .tooth.missing .surface {
-    /* Set the background of the surface to gray when missing */
     background-color: #a9a9a9 !important;
 }
 
@@ -175,24 +157,23 @@ h2, #score {
 <div style="text-align: center; margin-top: 15px; font-size: 14px;">
     **Right-click** on a tooth to toggle its **Missing** status (and to undo it).
 </div>
+<div style="text-align: center; margin-top: 5px; font-size: 14px; color: red;">
+    **Please click on the missing teeth first before clicking on plaque stained surfaces.**
+</div>
 
 <script>
 const toothData = {
-    // Q1: Upper Right. Reversed to draw 18 (left) to 11 (right/center)
     'q1': [11, 12, 13, 14, 15, 16, 17, 18].reverse(), 
-    // Q2: Upper Left. Draws 21 (left/center) to 28 (right)
     'q2': [21, 22, 23, 24, 25, 26, 27, 28],
-    // Q3: Lower Left. Draws 31 (left/center) to 38 (right)
     'q3': [31, 32, 33, 34, 35, 36, 37, 38],
-    // Q4: Lower Right. Reversed to draw 48 (left) to 41 (right/center)
     'q4': [41, 42, 43, 44, 45, 46, 47, 48].reverse() 
 };
 
 const posteriorTeeth = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48];
-const surfacesPost = ['M', 'D', 'B', 'L', 'O']; // 5 surfaces
-const surfacesAnt = ['M', 'D', 'B', 'L'];      // 4 surfaces
+const surfacesPost = ['M', 'D', 'B', 'L', 'O']; 
+const surfacesAnt = ['M', 'D', 'B', 'L'];      
 
-let validSurfaces = 0; // The total number of non-missing surfaces used for the denominator
+let validSurfaces = 0; 
 
 function isPosterior(tNum) {
     return posteriorTeeth.includes(tNum);
@@ -216,13 +197,11 @@ function generateChart() {
             toothDiv.className = `tooth ${isPost ? 'posterior' : 'anterior'}`;
             toothDiv.id = `t${tNum}`;
             
-            // 1. Add Tooth Number Label
             const numLabel = document.createElement('span');
             numLabel.className = 'number-label';
             numLabel.textContent = tNum;
             toothDiv.appendChild(numLabel);
 
-            // 2. Add Clickable Surfaces
             surfaces.forEach(key => {
                 const surfaceDiv = document.createElement('div');
                 surfaceDiv.className = `surface ${key}`;
@@ -231,13 +210,11 @@ function generateChart() {
                 toothDiv.appendChild(surfaceDiv);
             });
 
-            // 3. Add event listeners
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
             };
 
-            // 4. Update initial valid surfaces count
             validSurfaces += surfaces.length;
             quad.appendChild(toothDiv);
         });
@@ -245,11 +222,11 @@ function generateChart() {
     updateScore();
 }
 
+// SCORE UPDATE FUNCTION: Recalculates total plaque and percentage based on validSurfaces
 function updateScore() {
-    // Recalculate surfaces with plaque by counting the elements currently marked
     const surfacesWithPlaque = document.querySelectorAll('.surface.plaque').length;
     
-    // Calculation: Total Plaque / (Total Possible Surfaces - Surfaces of Missing Teeth)
+    // Calculation: Total Plaque / (Valid Surfaces)
     let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
     document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
 }
@@ -260,13 +237,12 @@ function toggleSurface(id) {
 
     if (toothDiv.classList.contains('missing')) return;
 
-    // Toggle plaque class
     elem.classList.toggle('plaque');
     
-    // Update score immediately
-    updateScore();
+    updateScore(); 
 }
 
+// MISSING TOOTH TOGGLE FUNCTION: Updates validSurfaces (the denominator)
 function toggleMissing(toothNum) {
     const toothDiv = document.getElementById(`t${toothNum}`);
     const surfaceCount = getSurfacesForTooth(toothNum).length;
@@ -280,19 +256,16 @@ function toggleMissing(toothNum) {
         // --- MARK AS MISSING ---
         const surfaces = toothDiv.querySelectorAll('.surface');
         
-        // 1. Clear any existing plaque on this tooth
+        // 1. Clear any existing plaque on this tooth 
         surfaces.forEach(s => {
             s.classList.remove('plaque');
         });
         
-        // 2. Mark the tooth as missing
+        // 2. Mark the tooth as missing and subtract from the valid total
         toothDiv.classList.add('missing');
-        
-        // 3. Subtract the count of surfaces from the valid total
         validSurfaces -= surfaceCount; 
     }
     
-    // Update score immediately after changing validSurfaces and cleaning up plaque
     updateScore();
 }
 
