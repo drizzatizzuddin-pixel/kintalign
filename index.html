@@ -39,7 +39,8 @@ h2, #score {
     padding: 0 5px; 
 }
 .quadrant.right {
-    /* FIX: Q1 and Q4 use row-reverse to draw P-A (18 to 11, 48 to 41) visually */
+    /* CRITICAL FIX: This reverses the visual display order of children (11, 12, ... 18) 
+       to produce the correct final order (18, 17, ... 11) */
     flex-direction: row-reverse;
 }
 
@@ -72,7 +73,6 @@ h2, #score {
 }
 
 /* --- POSTERIOR TEETH (5 Surfaces) Grid Assignment & Demarcation --- */
-
 .tooth.posterior .surface.M { 
     grid-area: 1 / 1 / 5 / 2;
     border-right: 1px solid black; 
@@ -94,7 +94,6 @@ h2, #score {
 }
 
 /* --- ANTERIOR TEETH (4 Surfaces) Grid Assignment & Demarcation --- */
-
 .tooth.anterior .surface.M { 
     grid-area: 1 / 1 / 5 / 2;
     border-right: 1px solid black; 
@@ -112,7 +111,6 @@ h2, #score {
 }
 
 /* --- 5. Plaque Marking & Missing Status --- */
-
 .surface.plaque {
     background-color: #990099; 
 }
@@ -164,12 +162,12 @@ h2, #score {
 
 <script>
 const toothData = {
-    // FIX: Removed reverse(). Q1 array is now written 18-11. CSS handles drawing order.
-    'q1': [18, 17, 16, 15, 14, 13, 12, 11], 
+    // FIX: Elements placed in DOM order 11 -> 18. CSS will reverse this to 18 -> 11.
+    'q1': [11, 12, 13, 14, 15, 16, 17, 18], 
     'q2': [21, 22, 23, 24, 25, 26, 27, 28],
     'q3': [31, 32, 33, 34, 35, 36, 37, 38],
-    // FIX: Removed reverse(). Q4 array is now written 48-41. CSS handles drawing order.
-    'q4': [48, 47, 46, 45, 44, 43, 42, 41] 
+    // FIX: Elements placed in DOM order 41 -> 48. CSS will reverse this to 48 -> 41.
+    'q4': [41, 42, 43, 44, 45, 46, 47, 48] 
 };
 
 const posteriorTeeth = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48];
@@ -177,6 +175,7 @@ const surfacesPost = ['M', 'D', 'B', 'L', 'O'];
 const surfacesAnt = ['M', 'D', 'B', 'L'];      
 
 let validSurfaces = 0; 
+let surfacesClicked = 0; 
 
 function isPosterior(tNum) {
     return posteriorTeeth.includes(tNum);
@@ -191,10 +190,6 @@ function generateChart() {
 
     quadrants.forEach(quad => {
         const teeth = toothData[quad.id];
-
-        // For Q1 and Q4 (right quadrants), the teeth are placed in the DOM in reverse order
-        // (18 then 17, etc.) and the CSS property `flex-direction: row-reverse;`
-        // then arranges them visually from 18 (left) to 11 (right).
 
         teeth.forEach(tNum => {
             const isPost = isPosterior(tNum);
@@ -230,9 +225,7 @@ function generateChart() {
 }
 
 function updateScore() {
-    const surfacesWithPlaque = document.querySelectorAll('.surface.plaque').length;
-    
-    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
+    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesClicked / validSurfaces) * 100);
     document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
 }
 
@@ -242,7 +235,13 @@ function toggleSurface(id) {
 
     if (toothDiv.classList.contains('missing')) return;
 
-    elem.classList.toggle('plaque');
+    if (elem.classList.contains('plaque')) {
+        elem.classList.remove('plaque');
+        surfacesClicked--; 
+    } else {
+        elem.classList.add('plaque');
+        surfacesClicked++; 
+    }
     
     updateScore(); 
 }
@@ -260,12 +259,15 @@ function toggleMissing(toothNum) {
         // --- MARK AS MISSING ---
         const surfaces = toothDiv.querySelectorAll('.surface');
         
-        // 1. Clear any existing plaque on this tooth 
+        // 1. Clean up plaque and adjust the numerator (surfacesClicked)
         surfaces.forEach(s => {
-            s.classList.remove('plaque');
+            if (s.classList.contains('plaque')) {
+                s.classList.remove('plaque');
+                surfacesClicked--; 
+            }
         });
         
-        // 2. Mark the tooth as missing and subtract from the valid total
+        // 2. Mark the tooth as missing and adjust the denominator (validSurfaces)
         toothDiv.classList.add('missing');
         validSurfaces -= surfaceCount; 
     }
