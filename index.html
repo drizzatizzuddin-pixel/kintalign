@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plaque Score Generator (Exact Diagram Match)</title>
+<title>Plaque Score Generator (Geometric Shape Match)</title>
 <style>
 /* --- 1. Global Styles --- */
 body { 
@@ -25,121 +25,186 @@ h2, #score {
     max-width: 900px;
     margin: 40px auto 0;
     display: grid;
-    gap: 30px; 
+    gap: 10px; /* Reduced vertical gap for closer spacing */
     padding: 0 10px;
 }
-
 .arch {
     display: flex;
     justify-content: center;
 }
-
 .quadrant {
     display: flex; 
     padding: 0 5px; 
 }
-
 .quadrant.right {
     flex-direction: row-reverse;
 }
 
-/* --- 3. Tooth Styling (The Visual Key) --- */
+/* --- 3. Tooth Styling (Geometric Shapes) --- */
 .tooth {
     position: relative;
     width: 32px; 
     height: 32px; 
     margin: 0 1px;
-    box-sizing: border-box; /* Crucial for borders */
+    box-sizing: border-box; 
     border: 1px solid black;
     cursor: pointer;
-    
-    /* Layout for Clickable Surfaces (4 or 5 surfaces) */
-    display: grid;
-    grid-template-columns: 1fr 1fr; 
-    grid-template-rows: 1fr 1fr;
-    
-    /* Hide the default white background to allow visual shapes to show through */
-    background: transparent;
+    background: white; 
 }
 
-/* --- Visual Shapes (Anteriors: Rectangle with horizontal line) --- */
-.tooth.anterior {
-    /* Draw the single horizontal line using a pseudo-element */
-    border-color: black;
+/* The inner container that holds the M/D and B/L surfaces */
+.surface-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* Container itself isn't clickable */
 }
-.tooth.anterior::after {
+
+/* Base style for all clickable areas */
+.surface {
+    position: absolute;
+    background: transparent;
+    pointer-events: all; 
+    z-index: 5;
+    /* Use a semi-transparent purple for plaque */
+    transition: background-color 0.1s;
+}
+.surface.plaque {
+    background-color: rgba(153, 0, 153, 0.4); 
+}
+
+
+/* --- Anterior Teeth (e.g., 11-13, 21-23, 31-33, 41-43) - Trapezoid Shapes --- */
+.tooth.anterior .surface-container {
+    /* Use a central box and borders to create the trapezoid visual */
+    width: 60%;
+    height: 100%;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}
+
+/* The Mesial and Distal surfaces are triangles covering the outer trapezoid parts */
+.tooth.anterior .surface.M, .tooth.anterior .surface.D {
+    width: 20%;
+    height: 100%;
+    top: 0;
+    z-index: 6; /* Click layer on top */
+}
+.tooth.anterior .surface.M { left: 0; }
+.tooth.anterior .surface.D { right: 0; }
+
+/* The Buccal and Lingual surfaces cover the inner rectangle */
+.tooth.anterior .surface.B, .tooth.anterior .surface.L {
+    width: 60%;
+    height: 50%;
+    left: 20%;
+    z-index: 6; 
+}
+.tooth.anterior .surface.B { top: 0; }
+.tooth.anterior .surface.L { bottom: 0; }
+
+/* Add the visual diagonal line using pseudo-elements on the tooth */
+.tooth.anterior::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 0;
-    right: 0;
-    height: 1px;
-    background: black;
+    width: 100%;
+    height: 100%;
     transform: translateY(-50%);
-    z-index: 5; /* Above surfaces */
+    /* Use a thin transparent border with two diagonal sides visible */
+    border: 16px solid transparent; 
+    border-left-color: black;
+    border-right-color: black;
+    box-sizing: border-box;
+    z-index: 5;
+}
+.tooth.anterior::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    background: black;
+    transform: translateX(-50%);
+    z-index: 5;
 }
 
-/* --- Visual Shapes (Posteriors: Rectangle with line and circle) --- */
+/* --- Posterior Teeth (e.g., 14-18, 24-28, 34-38, 44-48) - 5 Surfaces --- */
 .tooth.posterior {
-    border-color: black;
+    /* Square outer shape */
 }
-.tooth.posterior::before,
+
+.tooth.posterior .surface-container {
+    width: 80%;
+    height: 80%;
+    border: 1px solid black;
+    /* This creates the inner diamond shape visually */
+    border-width: 1px;
+}
+
+/* Use a simple 2x2 grid for the B, L, M, D click zones */
+.tooth.posterior .surface.M, .tooth.posterior .surface.D,
+.tooth.posterior .surface.B, .tooth.posterior .surface.L {
+    width: 50%;
+    height: 50%;
+    z-index: 6;
+    /* Positioning manually for the diamond click area */
+    position: absolute;
+}
+.tooth.posterior .surface.M { top: 0; left: 0; }
+.tooth.posterior .surface.D { top: 0; right: 0; }
+.tooth.posterior .surface.B { bottom: 0; left: 0; }
+.tooth.posterior .surface.L { bottom: 0; right: 0; }
+
+/* Occlusal surface is central */
+.tooth.posterior .surface.O {
+    width: 20%;
+    height: 20%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid black;
+    border-radius: 50%;
+    z-index: 7; /* On top of everything */
+}
+.tooth.posterior .surface.O.plaque {
+    background-color: #990099; /* Solid color for the dot */
+}
+
+/* Add visual lines for the diamond */
+.tooth.posterior::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    /* Draw the internal diamond lines */
+    border: 16px solid transparent; 
+    border-top-color: black;
+    border-bottom-color: black;
+    box-sizing: border-box;
+    z-index: 5;
+}
 .tooth.posterior::after {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
+    width: 0;
+    height: 0;
     transform: translate(-50%, -50%);
+    border: 16px solid transparent; 
+    border-left-color: black;
+    border-right-color: black;
+    box-sizing: border-box;
     z-index: 5;
-}
-
-/* Horizontal line for posteriors */
-.tooth.posterior::after {
-    width: 100%;
-    height: 1px;
-    background: black;
-    transform: translate(-50%, -50%);
-}
-
-/* Central circle for the occlusal surface */
-.tooth.posterior::before {
-    width: 8px; 
-    height: 8px;
-    background: white;
-    border: 1px solid black;
-    border-radius: 50%;
-    z-index: 6; /* Circle is on top of the line */
-}
-
-
-/* --- Clickable Surface Areas (Invisible Layer for Scoring) --- */
-.surface {
-    /* Surfaces cover the whole tooth. We use 5 surfaces for posteriors 
-       and 4 for anteriors, but they are layered invisibly. */
-    background: transparent; 
-    border: none;
-    z-index: 4; /* Below the black lines/circles */
-}
-
-/* --- Plaque Marking --- */
-
-/* The crucial part: When a surface is marked, it colors the background of the *tooth*
-   The original image seems to mark the *surface area* itself, which we will mimic
-   by giving the surface a background color. */
-.surface.plaque {
-    background-color: rgba(153, 0, 153, 0.4); /* Transparent purple for visibility */
-}
-
-/* Specific styling for the Occlusal surface plaque (the dot itself) */
-.tooth.posterior .surface.O.plaque {
-    /* If the Occlusal surface is marked, change the color of the central circle pseudo-element */
-}
-
-/* We must dynamically update the pseudo-elements if the plaque is on the Occlusal surface. 
-   This is complex, so we will simplify: if the Occlusal is marked, we rely on the 
-   CSS class to change the visual color of the dot. */
-.tooth.posterior[data-occlusal-plaque="true"]::before {
-    background: #990099 !important; /* Change circle color to purple */
 }
 
 
@@ -147,17 +212,16 @@ h2, #score {
 .tooth.missing {
     opacity: 0.5;
     pointer-events: none; 
+}
+.tooth.missing * {
+    background-color: transparent !important; /* Clear plaque */
+}
+.tooth.missing .surface-container {
     border-color: #777 !important;
 }
-
-.tooth.missing::before {
-    border-color: #777 !important;
-}
-.tooth.missing::after {
-    background: #777 !important;
-}
-.tooth.missing .surface.plaque {
-    background-color: transparent !important; /* Remove any lingering surface plaque */
+.tooth.missing::before, .tooth.missing::after {
+    border-color: transparent #777 #777 transparent !important;
+    background: transparent !important;
 }
 
 /* --- 4. Numbering (Labels) --- */
@@ -169,14 +233,8 @@ h2, #score {
     line-height: 1;
     font-weight: normal;
 }
-
-.upper-arch .number-label {
-    top: -15px;
-}
-
-.lower-arch .number-label {
-    bottom: -15px;
-}
+.upper-arch .number-label { top: -15px; }
+.lower-arch .number-label { bottom: -15px; }
 </style>
 </head>
 <body>
@@ -188,7 +246,6 @@ h2, #score {
         <div class="quadrant right" id="q1"></div>
         <div class="quadrant left" id="q2"></div>
     </div>
-
     <div class="arch lower-arch">
         <div class="quadrant right" id="q4"></div>
         <div class="quadrant left" id="q3"></div>
@@ -209,9 +266,9 @@ const toothData = {
     'q4': [41, 42, 43, 44, 45, 46, 47, 48]
 };
 
-// Surfaces are M, D, B, L, O
-const surfacesMap = ['M', 'D', 'B', 'L']; // B/L are outer, M/D are inner/proximal
-const posteriorTeeth = [18, 17, 16, 15, 25, 26, 27, 28, 38, 37, 36, 35, 48, 47, 46, 45];
+const surfacesMap = ['M', 'D', 'B', 'L'];
+const posteriorTeeth = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48];
+const anteriorTeeth = [11, 12, 13, 21, 22, 23, 31, 32, 33, 41, 42, 43];
 
 let surfacesClicked = 0;
 let validSurfaces = 0;
@@ -238,39 +295,37 @@ function generateChart() {
             numLabel.textContent = tNum;
             toothDiv.appendChild(numLabel);
 
-            // 2. Add the 4 main surfaces (M, D, B, L)
-            surfacesMap.forEach((key, index) => {
-                const surfaceDiv = createSurfaceDiv(tNum, key, `s${index}`);
-                toothDiv.appendChild(surfaceDiv);
+            // 2. Add Surface Container (Visual lines are tied to this)
+            const surfaceContainer = document.createElement('div');
+            surfaceContainer.className = 'surface-container';
+
+            // 3. Add the clickable surfaces (M, D, B, L, +O)
+            surfacesMap.forEach((key) => {
+                const surfaceDiv = createSurfaceDiv(tNum, key);
+                surfaceContainer.appendChild(surfaceDiv);
             });
+            validSurfaces += 4;
             
-            // 3. Add the 5th (Occlusal) surface for posteriors
             if (isPost) {
-                const occlusal = createSurfaceDiv(tNum, 'O', 'occlusal');
-                // Occlusal click area needs to be small and centered to target the dot
-                occlusal.style.gridColumn = '1 / 3';
-                occlusal.style.gridRow = '1 / 3';
-                occlusal.style.margin = 'auto';
-                occlusal.style.width = '10px';
-                occlusal.style.height = '10px';
-                occlusal.style.cursor = 'crosshair'; // Visual cue for central target
-                toothDiv.appendChild(occlusal);
-                validSurfaces += 1;
-            } 
+                const occlusal = createSurfaceDiv(tNum, 'O');
+                surfaceContainer.appendChild(occlusal);
+                validSurfaces += 1; 
+            }
             
-            // Add right-click listener to toggle 'missing' status
+            toothDiv.appendChild(surfaceContainer);
+            
+            // Add right-click listener
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
             };
 
             quad.appendChild(toothDiv);
-            validSurfaces += 4; // B, L, M, D are always present
         });
     });
 
-    // Mark tooth 44 for visualization purposes
-    const initialMarkedSurface = document.getElementById('44-M');
+    // Simulate marked tooth 44
+    const initialMarkedSurface = document.getElementById('44-B');
     if (initialMarkedSurface) {
         initialMarkedSurface.classList.add('plaque');
         surfacesClicked++;
@@ -279,9 +334,9 @@ function generateChart() {
     updateScore();
 }
 
-function createSurfaceDiv(tNum, key, className) {
+function createSurfaceDiv(tNum, key) {
     const surfaceDiv = document.createElement('div');
-    surfaceDiv.className = `surface ${className}`;
+    surfaceDiv.className = `surface ${key}`;
     surfaceDiv.id = `${tNum}-${key}`;
     surfaceDiv.onclick = () => toggleSurface(tNum, `${tNum}-${key}`);
     return surfaceDiv;
@@ -307,19 +362,9 @@ function toggleSurface(toothNum, id) {
     if (elem.classList.contains('plaque')) {
         elem.classList.remove('plaque');
         surfacesClicked--;
-        
-        // Update visual state for Occlusal dot
-        if (id.endsWith('-O')) {
-            toothDiv.removeAttribute('data-occlusal-plaque');
-        }
     } else {
         elem.classList.add('plaque');
         surfacesClicked++;
-
-        // Update visual state for Occlusal dot
-        if (id.endsWith('-O')) {
-            toothDiv.setAttribute('data-occlusal-plaque', 'true');
-        }
     }
     updateScore();
 }
@@ -329,11 +374,9 @@ function toggleMissing(toothNum) {
     const surfaceCount = getToothSurfaceCount(toothNum);
     
     if (toothDiv.classList.contains('missing')) {
-        // Restore tooth
         toothDiv.classList.remove('missing');
         validSurfaces += surfaceCount; 
     } else {
-        // Mark as missing
         const surfaces = toothDiv.querySelectorAll('.surface');
         surfaces.forEach(s => {
             if (s.classList.contains('plaque')) {
@@ -341,14 +384,12 @@ function toggleMissing(toothNum) {
                 surfacesClicked--;
             }
         });
-        toothDiv.removeAttribute('data-occlusal-plaque');
         toothDiv.classList.add('missing');
         validSurfaces -= surfaceCount; 
     }
     updateScore();
 }
 
-// Draw the chart when the page loads
 generateChart();
 </script>
 </body>
