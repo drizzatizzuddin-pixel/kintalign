@@ -17,25 +17,25 @@ body {
 
 h2 {
     font-size: 1.1rem;
-    margin-bottom: 15px;
+    margin-bottom: 25px; /* Tambah ruang untuk label atas */
 }
 
-/* --- 2. Chart Layout (REFIXED FOR MOBILE) --- */
+/* --- 2. Chart Layout --- */
 .dental-chart-container {
     width: 100%;
-    margin: 25px auto 0; 
+    margin: 20px auto 0; 
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow-x: auto; 
-    padding-bottom: 20px;
+    padding-bottom: 30px;
 }
 
 .arch {
     display: flex;
     justify-content: center;
     min-width: max-content; 
-    margin-bottom: 30px;
+    margin-bottom: 40px; /* Jarak antara rahang atas & bawah */
 }
 
 .quadrant {
@@ -43,15 +43,14 @@ h2 {
     padding: 0 1px; 
 }
 
-/* CSS Row-Reverse untuk Quadrant 1 (Atas Kanan) dan 4 (Bawah Kanan) */
-/* Ini supaya 11/41 berada di tengah (midline) */
+/* Row-Reverse untuk letakkan gigi 11 & 41 di tengah (midline) */
 .quadrant.right {
     flex-direction: row-reverse;
 }
 
 /* --- 3. Tooth Styling --- */
 .tooth {
-    position: relative;
+    position: relative; /* Penting untuk label absolute */
     width: 40px; 
     height: 40px; 
     margin: 0 1px;
@@ -64,75 +63,81 @@ h2 {
     background: white; 
 }
 
-/* --- 4. Surface Styling --- */
+/* --- 4. Numbering Labels (THE FIX) --- */
+.number-label {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #555;
+    pointer-events: none; /* Supaya tak kacau klik surface */
+}
+
+/* Label atas gigi untuk rahang atas */
+.upper-arch .number-label {
+    top: -18px; 
+}
+
+/* Label bawah gigi untuk rahang bawah */
+.lower-arch .number-label {
+    bottom: -18px;
+}
+
+/* --- 5. Surface Styling --- */
 .surface {
-    position: relative;
     background: white;
-    cursor: pointer;
     box-sizing: border-box;
     transition: background-color 0.1s;
     border: 0; 
     z-index: 2; 
 }
 
-/* POSTERIOR (5 Surfaces) */
-.tooth.posterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ccc; } 
-.tooth.posterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ccc; }
-.tooth.posterior .surface.B { grid-area: 1 / 2 / 2 / 4; border-bottom: 1px solid #ccc; }
-.tooth.posterior .surface.O { grid-area: 2 / 2 / 4 / 4; border-bottom: 1px solid #ccc; }
+/* POSTERIOR */
+.tooth.posterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ddd; } 
+.tooth.posterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ddd; }
+.tooth.posterior .surface.B { grid-area: 1 / 2 / 2 / 4; border-bottom: 1px solid #ddd; }
+.tooth.posterior .surface.O { grid-area: 2 / 2 / 4 / 4; border-bottom: 1px solid #ddd; }
 .tooth.posterior .surface.L { grid-area: 4 / 2 / 5 / 4; }
 
-/* ANTERIOR (4 Surfaces) */
-.tooth.anterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ccc; } 
-.tooth.anterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ccc; }
-.tooth.anterior .surface.B { grid-area: 1 / 2 / 3 / 4; border-bottom: 1px solid #ccc; }
+/* ANTERIOR */
+.tooth.anterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ddd; } 
+.tooth.anterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ddd; }
+.tooth.anterior .surface.B { grid-area: 1 / 2 / 3 / 4; border-bottom: 1px solid #ddd; }
 .tooth.anterior .surface.L { grid-area: 3 / 2 / 5 / 4; }
 
-/* Status Colors */
-.surface.plaque { background-color: #990099; } /* KintAlign Purple */
-.tooth.missing { opacity: 0.25; }
-.tooth.missing .surface { background-color: #d1d1d1 !important; }
+/* Status */
+.surface.plaque { background-color: #990099 !important; } 
+.tooth.missing { opacity: 0.2; }
+.tooth.missing .surface { background-color: #ccc !important; }
 
-/* Labels */
-.number-label {
-    position: absolute;
-    font-size: 9px;
-    width: 100%;
-    text-align: center;
-    font-weight: bold;
-    z-index: 10;
-}
-.upper-arch .number-label { top: -16px; }
-.lower-arch .number-label { bottom: -16px; }
-
-/* --- 5. UI Elements --- */
+/* --- 6. UI --- */
 #generateButton {
-    margin-top: 15px;
-    padding: 10px 20px;
-    font-size: 15px;
+    margin-top: 10px;
+    padding: 12px 24px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     background-color: #2e7d32;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 #score {
-    margin-top: 15px; 
-    font-size: 20px; 
+    margin: 15px 0; 
+    font-size: 22px; 
     font-weight: bold;
     color: #b71c1c; 
 }
 
 .instruction {
     font-size: 11px;
-    color: #777;
-    margin-top: 10px;
-    line-height: 1.4;
+    color: #888;
+    margin-top: 5px;
 }
 
-/* Mobile Tweak */
 @media screen and (max-width: 480px) {
     .tooth { width: 35px; height: 35px; }
 }
@@ -153,21 +158,19 @@ h2 {
     </div>
 </div>
 
-<button id="generateButton" onclick="generateScore()">Generate Plaque Score</button>
+<button id="generateButton" onclick="generateScore()">Generate Score</button>
 <h3 id="score">Score: 0%</h3>
 
 <div class="instruction">
-    Klik kotak untuk <strong>Plaque</strong>.<br>
-    Right-click (Desktop) atau Long Press (Mobile) untuk <strong>Missing Tooth</strong>.
+    Klik untuk <strong>Plaque</strong>. Right-click/Hold untuk <strong>Missing</strong>.
 </div>
 
 <script>
-// Susunan FDI yang betul untuk Dental Chart View
 const toothData = {
-    'q1': [11, 12, 13, 14, 15, 16, 17, 18], // Midline -> Distal (Reverse by CSS)
-    'q2': [21, 22, 23, 24, 25, 26, 27, 28], // Midline -> Distal
-    'q3': [31, 32, 33, 34, 35, 36, 37, 38], // Midline -> Distal
-    'q4': [41, 42, 43, 44, 45, 46, 47, 48]  // Midline -> Distal (Reverse by CSS)
+    'q1': [11, 12, 13, 14, 15, 16, 17, 18], 
+    'q2': [21, 22, 23, 24, 25, 26, 27, 28],
+    'q3': [31, 32, 33, 34, 35, 36, 37, 38],
+    'q4': [41, 42, 43, 44, 45, 46, 47, 48] 
 };
 
 const posteriorTeeth = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48];
@@ -192,11 +195,13 @@ function generateChart() {
             toothDiv.className = `tooth ${isPost ? 'posterior' : 'anterior'}`;
             toothDiv.id = `t${tNum}`;
             
-            const numLabel = document.createElement('span');
+            // Create Label
+            const numLabel = document.createElement('div');
             numLabel.className = 'number-label';
             numLabel.textContent = tNum;
             toothDiv.appendChild(numLabel);
 
+            // Create Surfaces
             surfaces.forEach(key => {
                 const surfaceDiv = document.createElement('div');
                 surfaceDiv.className = `surface ${key}`;
@@ -208,7 +213,6 @@ function generateChart() {
                 toothDiv.appendChild(surfaceDiv);
             });
 
-            // Handle Right Click / Long Press for Missing
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
