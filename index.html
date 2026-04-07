@@ -16,42 +16,44 @@ body {
 }
 
 h2 {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
 }
 
 /* --- 2. Chart Layout (REFIXED FOR MOBILE) --- */
 .dental-chart-container {
     width: 100%;
-    margin: 30px auto 0; 
+    margin: 25px auto 0; 
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Ini untuk bagi user scroll kiri kanan kalau fon kecik sangat */
     overflow-x: auto; 
-    padding-bottom: 25px;
+    padding-bottom: 20px;
 }
 
 .arch {
     display: flex;
     justify-content: center;
-    min-width: max-content; /* Elak quadrant bertindih */
-    margin-bottom: 35px;
+    min-width: max-content; 
+    margin-bottom: 30px;
 }
 
 .quadrant {
     display: flex; 
-    padding: 0 2px; 
+    padding: 0 1px; 
 }
+
+/* CSS Row-Reverse untuk Quadrant 1 (Atas Kanan) dan 4 (Bawah Kanan) */
+/* Ini supaya 11/41 berada di tengah (midline) */
 .quadrant.right {
     flex-direction: row-reverse;
 }
 
-/* --- 3. Tooth Styling (Responsive Size) --- */
+/* --- 3. Tooth Styling --- */
 .tooth {
     position: relative;
-    width: 42px; /* Kecilkan sikit dari 64px asal */
-    height: 42px; 
+    width: 40px; 
+    height: 40px; 
     margin: 0 1px;
     box-sizing: border-box; 
     border: 1px solid #444; 
@@ -73,23 +75,23 @@ h2 {
     z-index: 2; 
 }
 
-/* POSTERIOR */
+/* POSTERIOR (5 Surfaces) */
 .tooth.posterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ccc; } 
 .tooth.posterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ccc; }
 .tooth.posterior .surface.B { grid-area: 1 / 2 / 2 / 4; border-bottom: 1px solid #ccc; }
 .tooth.posterior .surface.O { grid-area: 2 / 2 / 4 / 4; border-bottom: 1px solid #ccc; }
 .tooth.posterior .surface.L { grid-area: 4 / 2 / 5 / 4; }
 
-/* ANTERIOR */
+/* ANTERIOR (4 Surfaces) */
 .tooth.anterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ccc; } 
 .tooth.anterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ccc; }
 .tooth.anterior .surface.B { grid-area: 1 / 2 / 3 / 4; border-bottom: 1px solid #ccc; }
 .tooth.anterior .surface.L { grid-area: 3 / 2 / 5 / 4; }
 
-/* Status */
-.surface.plaque { background-color: #990099; } /* Ungu KintAlign */
-.tooth.missing { opacity: 0.3; }
-.tooth.missing .surface { background-color: #a9a9a9 !important; }
+/* Status Colors */
+.surface.plaque { background-color: #990099; } /* KintAlign Purple */
+.tooth.missing { opacity: 0.25; }
+.tooth.missing .surface { background-color: #d1d1d1 !important; }
 
 /* Labels */
 .number-label {
@@ -100,41 +102,39 @@ h2 {
     font-weight: bold;
     z-index: 10;
 }
-.upper-arch .number-label { top: -18px; }
-.lower-arch .number-label { bottom: -18px; }
+.upper-arch .number-label { top: -16px; }
+.lower-arch .number-label { bottom: -16px; }
 
-/* --- Button & Score --- */
+/* --- 5. UI Elements --- */
 #generateButton {
-    margin-top: 20px;
-    padding: 12px 25px;
-    font-size: 16px;
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
-    background-color: #4CAF50;
+    background-color: #2e7d32;
     color: white;
     border: none;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 6px;
 }
 
 #score {
     margin-top: 15px; 
-    font-size: 22px; 
+    font-size: 20px; 
     font-weight: bold;
-    color: darkred; 
+    color: #b71c1c; 
 }
 
 .instruction {
-    font-size: 12px;
-    color: #666;
+    font-size: 11px;
+    color: #777;
     margin-top: 10px;
-    padding: 0 20px;
+    line-height: 1.4;
 }
 
-/* Mobile Fix for small screens */
-@media screen and (max-width: 400px) {
-    .tooth { width: 36px; height: 36px; }
-    .number-label { font-size: 8px; }
+/* Mobile Tweak */
+@media screen and (max-width: 480px) {
+    .tooth { width: 35px; height: 35px; }
 }
 </style>
 </head>
@@ -157,23 +157,24 @@ h2 {
 <h3 id="score">Score: 0%</h3>
 
 <div class="instruction">
-    <strong>Tips:</strong> Klik kotak untuk tanda Plaque. <br>
-    <strong>Right-click</strong> (atau long press) untuk tanda gigi <strong>Missing</strong>.
+    Klik kotak untuk <strong>Plaque</strong>.<br>
+    Right-click (Desktop) atau Long Press (Mobile) untuk <strong>Missing Tooth</strong>.
 </div>
 
 <script>
+// Susunan FDI yang betul untuk Dental Chart View
 const toothData = {
-    'q1': [18, 17, 16, 15, 14, 13, 12, 11], 
-    'q2': [21, 22, 23, 24, 25, 26, 27, 28],
-    'q3': [31, 32, 33, 34, 35, 36, 37, 38],
-    'q4': [48, 47, 46, 45, 44, 43, 42, 41] 
+    'q1': [11, 12, 13, 14, 15, 16, 17, 18], // Midline -> Distal (Reverse by CSS)
+    'q2': [21, 22, 23, 24, 25, 26, 27, 28], // Midline -> Distal
+    'q3': [31, 32, 33, 34, 35, 36, 37, 38], // Midline -> Distal
+    'q4': [41, 42, 43, 44, 45, 46, 47, 48]  // Midline -> Distal (Reverse by CSS)
 };
 
 const posteriorTeeth = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48];
 const surfacesPost = ['M', 'D', 'B', 'L', 'O']; 
 const surfacesAnt = ['M', 'D', 'B', 'L'];      
 
-let validSurfaces = 0; 
+let validSurfacesCount = 0; 
 
 function isPosterior(tNum) { return posteriorTeeth.includes(tNum); }
 function getSurfacesForTooth(tNum) { return isPosterior(tNum) ? surfacesPost : surfacesAnt; }
@@ -207,12 +208,13 @@ function generateChart() {
                 toothDiv.appendChild(surfaceDiv);
             });
 
+            // Handle Right Click / Long Press for Missing
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
             };
 
-            validSurfaces += surfaces.length;
+            validSurfacesCount += surfaces.length;
             quad.appendChild(toothDiv);
         });
     });
@@ -221,7 +223,7 @@ function generateChart() {
 
 function generateScore() {
     const plaqueCount = document.querySelectorAll('.surface.plaque').length;
-    let percent = validSurfaces === 0 ? 0 : Math.round((plaqueCount / validSurfaces) * 100);
+    let percent = validSurfacesCount === 0 ? 0 : Math.round((plaqueCount / validSurfacesCount) * 100);
     document.getElementById('score').innerText = `Score: ${percent}%`;
 }
 
@@ -231,12 +233,12 @@ function toggleMissing(toothNum) {
     
     if (toothDiv.classList.contains('missing')) {
         toothDiv.classList.remove('missing');
-        validSurfaces += surfaceCount; 
+        validSurfacesCount += surfaceCount; 
     } else {
         const surfaces = toothDiv.querySelectorAll('.surface');
         surfaces.forEach(s => s.classList.remove('plaque'));
         toothDiv.classList.add('missing');
-        validSurfaces -= surfaceCount; 
+        validSurfacesCount -= surfaceCount; 
     }
 }
 
