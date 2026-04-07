@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plaque Score Generator (Final)</title>
+<title>Plaque Score Generator (Best Version)</title>
 
 <style>
 body { 
     font-family: Arial, sans-serif; 
     margin: 10px; 
-    user-select: none; 
     text-align: center; 
+    user-select: none;
 }
 
 #score {
@@ -23,26 +23,37 @@ body {
 .dental-chart-container {
     width: 100%;
     max-width: 900px;
-    margin: 20px auto; 
+    margin: 20px auto;
     display: grid;
-    gap: 10px; 
-    justify-content: center; 
-    overflow: hidden;
+    gap: 10px;
 }
 
 .arch { display: flex; justify-content: center; }
 .quadrant { display: flex; padding: 0 2px; }
 .quadrant.right { flex-direction: row-reverse; }
 
+/* Tooth responsive */
 .tooth {
     position: relative;
-    width: min(8vw, 64px); 
-    height: min(8vw, 64px); 
+    width: min(8vw, 64px);
+    height: min(8vw, 64px);
     margin: 0 1px;
-    border: 1px solid black; 
+    border: 1px solid black;
     display: grid;
-    grid-template-columns: repeat(4, 1fr); 
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: repeat(4,1fr);
+    grid-template-rows: repeat(4,1fr);
+    background: white;
+}
+
+/* LABEL INSIDE (FIXED) */
+.number-label {
+    position: absolute;
+    top: 2px;
+    width: 100%;
+    text-align: center;
+    font-size: 9px;
+    font-weight: bold;
+    z-index: 10;
 }
 
 /* surfaces */
@@ -66,18 +77,12 @@ body {
 .tooth.missing { opacity:0.5; }
 .tooth.missing .surface { background:#aaa !important; }
 
-.number-label {
-    position:absolute;
-    font-size:9px;
-    width:100%;
-}
-.upper-arch .number-label { top:-12px; }
-.lower-arch .number-label { bottom:-12px; }
-
+/* Button */
 button {
-    margin-top:20px;
-    padding:8px 16px;
-    font-weight:bold;
+    margin-top: 20px;
+    padding: 8px 16px;
+    font-weight: bold;
+    cursor: pointer;
 }
 </style>
 </head>
@@ -147,8 +152,8 @@ function generateChart(){
                 tooth.appendChild(d);
             });
 
-            // HOLD detection (PC + Mobile)
-            tooth.addEventListener("mousedown", (e)=>{
+            // HOLD (PC + Mobile)
+            tooth.addEventListener("mousedown",(e)=>{
                 if(e.button!==0) return;
                 isHolding=false;
 
@@ -158,10 +163,10 @@ function generateChart(){
                 },500);
             });
 
-            tooth.addEventListener("mouseup", ()=>clearTimeout(pressTimer));
-            tooth.addEventListener("mouseleave", ()=>clearTimeout(pressTimer));
+            tooth.addEventListener("mouseup",()=>clearTimeout(pressTimer));
+            tooth.addEventListener("mouseleave",()=>clearTimeout(pressTimer));
 
-            tooth.addEventListener("touchstart", ()=>{
+            tooth.addEventListener("touchstart",()=>{
                 isHolding=false;
                 pressTimer=setTimeout(()=>{
                     toggleMissing(t);
@@ -169,7 +174,7 @@ function generateChart(){
                 },500);
             });
 
-            tooth.addEventListener("touchend", ()=>clearTimeout(pressTimer));
+            tooth.addEventListener("touchend",()=>clearTimeout(pressTimer));
 
             validSurfaces+=getSurf(t).length;
             q.appendChild(tooth);
