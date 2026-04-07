@@ -22,7 +22,7 @@ h2, #score {
     color: darkred; 
 }
 
-/* --- 2. Chart Layout & Centering (FIXED FOR MOBILE) --- */
+/* --- 2. Chart Layout & Centering --- */
 .dental-chart-container {
     max-width: 900px;
     margin: 40px auto 0; 
@@ -30,17 +30,10 @@ h2, #score {
     gap: 20px; 
     padding: 0 10px;
     justify-content: center; 
-    
-    /* TAMBAHAN BARU: Bagi boleh scroll kalau skrin kecik */
-    overflow-x: auto; 
-    white-space: nowrap;
-    padding-bottom: 20px; /* Ruang untuk scrollbar */
 }
-
 .arch {
     display: flex;
     justify-content: center; 
-    min-width: max-content; /* Biar dia tak 'wrap' ke bawah */
 }
 .quadrant {
     display: flex; 
@@ -60,6 +53,7 @@ h2, #score {
     border: 1px solid black; 
     cursor: pointer;
     
+    /* 4x4 Grid Definition */
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr; 
     grid-template-rows: 1fr 1fr 1fr 1fr;
@@ -77,25 +71,57 @@ h2, #score {
     z-index: 2; 
 }
 
-/* POSTERIOR */
-.tooth.posterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid black; } 
-.tooth.posterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid black; }
-.tooth.posterior .surface.B { grid-area: 1 / 2 / 2 / 4; border-bottom: 1px solid black; }
-.tooth.posterior .surface.O { grid-area: 2 / 2 / 4 / 4; border-bottom: 1px solid black; }
-.tooth.posterior .surface.L { grid-area: 4 / 2 / 5 / 4; }
+/* --- POSTERIOR TEETH (5 Surfaces) Grid Assignment & Demarcation --- */
+.tooth.posterior .surface.M { 
+    grid-area: 1 / 1 / 5 / 2;
+    border-right: 1px solid black; 
+} 
+.tooth.posterior .surface.D { 
+    grid-area: 1 / 4 / 5 / 5;
+    border-left: 1px solid black; 
+}
+.tooth.posterior .surface.B { 
+    grid-area: 1 / 2 / 2 / 4; 
+    border-bottom: 1px solid black; 
+}
+.tooth.posterior .surface.O { 
+    grid-area: 2 / 2 / 4 / 4; 
+    border-bottom: 1px solid black; 
+}
+.tooth.posterior .surface.L { 
+    grid-area: 4 / 2 / 5 / 4;
+}
 
-/* ANTERIOR */
-.tooth.anterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid black; } 
-.tooth.anterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid black; }
-.tooth.anterior .surface.B { grid-area: 1 / 2 / 3 / 4; border-bottom: 1px solid black; }
-.tooth.anterior .surface.L { grid-area: 3 / 2 / 5 / 4; }
+/* --- ANTERIOR TEETH (4 Surfaces) Grid Assignment & Demarcation --- */
+.tooth.anterior .surface.M { 
+    grid-area: 1 / 1 / 5 / 2;
+    border-right: 1px solid black; 
+} 
+.tooth.anterior .surface.D { 
+    grid-area: 1 / 4 / 5 / 5;
+    border-left: 1px solid black; 
+}
+.tooth.anterior .surface.B { 
+    grid-area: 1 / 2 / 3 / 4; 
+    border-bottom: 1px solid black; 
+}
+.tooth.anterior .surface.L { 
+    grid-area: 3 / 2 / 5 / 4;
+}
 
-/* --- 5. Plaque Marking & Missing --- */
-.surface.plaque { background-color: #990099; }
-.tooth.missing { opacity: 0.5; }
-.tooth.missing .surface { background-color: #a9a9a9 !important; }
+/* --- 5. Plaque Marking & Missing Status FIX --- */
+.surface.plaque {
+    background-color: #990099; 
+}
+.tooth.missing {
+    opacity: 0.5;
+    /* REMOVED: pointer-events: none; so that right-click to UNDO can register */
+}
+.tooth.missing .surface {
+    background-color: #a9a9a9 !important;
+}
 
-/* --- 6. Numbering --- */
+/* --- 6. Numbering (Labels) --- */
 .number-label {
     position: absolute;
     font-size: 10px;
@@ -119,6 +145,10 @@ h2, #score {
     color: white;
     border: none;
     border-radius: 5px;
+    transition: background-color 0.2s;
+}
+#generateButton:hover {
+    background-color: #45a049;
 }
 </style>
 </head>
@@ -141,14 +171,19 @@ h2, #score {
 <h3 id="score">Plaque Score: 0%</h3>
 
 <div style="text-align: center; margin-top: 15px; font-size: 14px;">
-    **Right-click** on a tooth to toggle its **Missing** status.
+    **Right-click** on a tooth to toggle its **Missing** status (and to undo it).
+</div>
+<div style="text-align: center; margin-top: 5px; font-size: 14px; color: red;">
+    **Right-click once to mark missing, and right-click a second time on the gray area to restore.**
 </div>
 
 <script>
 const toothData = {
+    // Q1: DOM order 11-18. CSS reverses to 18-11.
     'q1': [11, 12, 13, 14, 15, 16, 17, 18], 
     'q2': [21, 22, 23, 24, 25, 26, 27, 28],
     'q3': [31, 32, 33, 34, 35, 36, 37, 38],
+    // Q4: DOM order 41-48. CSS reverses to 48-41.
     'q4': [41, 42, 43, 44, 45, 46, 47, 48] 
 };
 
@@ -158,43 +193,62 @@ const surfacesAnt = ['M', 'D', 'B', 'L'];
 
 let validSurfaces = 0; 
 
-function isPosterior(tNum) { return posteriorTeeth.includes(tNum); }
-function getSurfacesForTooth(tNum) { return isPosterior(tNum) ? surfacesPost : surfacesAnt; }
+function isPosterior(tNum) {
+    return posteriorTeeth.includes(tNum);
+}
+
+function getSurfacesForTooth(tNum) {
+    return isPosterior(tNum) ? surfacesPost : surfacesAnt;
+}
 
 function generateChart() {
     const quadrants = document.querySelectorAll('.quadrant');
+
     quadrants.forEach(quad => {
         const teeth = toothData[quad.id];
+
         teeth.forEach(tNum => {
             const isPost = isPosterior(tNum);
             const surfaces = getSurfacesForTooth(tNum);
+            
             const toothDiv = document.createElement('div');
             toothDiv.className = `tooth ${isPost ? 'posterior' : 'anterior'}`;
             toothDiv.id = `t${tNum}`;
+            
             const numLabel = document.createElement('span');
             numLabel.className = 'number-label';
             numLabel.textContent = tNum;
             toothDiv.appendChild(numLabel);
+
             surfaces.forEach(key => {
                 const surfaceDiv = document.createElement('div');
                 surfaceDiv.className = `surface ${key}`;
                 surfaceDiv.id = `${tNum}-${key}`;
+                // Clicks only toggle the plaque class
                 surfaceDiv.onclick = () => surfaceDiv.classList.toggle('plaque');
                 toothDiv.appendChild(surfaceDiv);
             });
+
+            // The right-click listener is on the main tooth div
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
             };
+
             validSurfaces += surfaces.length;
             quad.appendChild(toothDiv);
         });
     });
+    // Initial score display
     generateScore();
 }
 
+// Function triggered by the button
 function generateScore() {
+    // 1. Get the numerator by counting all surfaces marked 'plaque' currently in the DOM
     const surfacesWithPlaque = document.querySelectorAll('.surface.plaque').length;
+    
+    // 2. Calculate the score using the current validSurfaces count
     let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
     document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
 }
@@ -202,16 +256,29 @@ function generateScore() {
 function toggleMissing(toothNum) {
     const toothDiv = document.getElementById(`t${toothNum}`);
     const surfaceCount = getSurfacesForTooth(toothNum).length;
+    
     if (toothDiv.classList.contains('missing')) {
+        // --- RESTORE tooth (undo missing) ---
         toothDiv.classList.remove('missing');
         validSurfaces += surfaceCount; 
+        
     } else {
+        // --- MARK AS MISSING ---
         const surfaces = toothDiv.querySelectorAll('.surface');
-        surfaces.forEach(s => s.classList.remove('plaque'));
+        
+        // 1. Clean up plaque 
+        surfaces.forEach(s => {
+            s.classList.remove('plaque');
+        });
+        
+        // 2. Mark the tooth as missing and adjust the denominator
         toothDiv.classList.add('missing');
         validSurfaces -= surfaceCount; 
     }
+    
+    // No score update here, the button must be pressed.
 }
+
 generateChart();
 </script>
 </body>
