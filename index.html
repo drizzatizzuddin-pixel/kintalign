@@ -2,65 +2,67 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plaque Score Generator (4x4 Grid Final)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KintAlign - Plaque Score Calculator</title>
 <style>
 /* --- 1. Global Styles --- */
 body { 
-    font-family: Arial, sans-serif; 
-    margin: 20px; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    margin: 10px; 
     user-select: none; 
-    text-align: center; 
-}
-h2, #score { 
-    text-align: center; 
-}
-#score {
-    margin-top: 20px; 
-    font-size: 18px; 
-    font-weight: bold;
-    color: darkred; 
+    text-align: center;
+    background-color: #fff;
+    color: #333;
 }
 
-/* --- 2. Chart Layout & Centering --- */
-.dental-chart-container {
-    max-width: 900px;
-    margin: 40px auto 0; 
-    display: grid;
-    gap: 20px; 
-    padding: 0 10px;
-    justify-content: center; 
+h2 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
 }
+
+/* --- 2. Chart Layout (REFIXED FOR MOBILE) --- */
+.dental-chart-container {
+    width: 100%;
+    margin: 30px auto 0; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Ini untuk bagi user scroll kiri kanan kalau fon kecik sangat */
+    overflow-x: auto; 
+    padding-bottom: 25px;
+}
+
 .arch {
     display: flex;
-    justify-content: center; 
+    justify-content: center;
+    min-width: max-content; /* Elak quadrant bertindih */
+    margin-bottom: 35px;
 }
+
 .quadrant {
     display: flex; 
-    padding: 0 5px; 
+    padding: 0 2px; 
 }
 .quadrant.right {
     flex-direction: row-reverse;
 }
 
-/* --- 3. Tooth Styling (4x4 Grid) --- */
+/* --- 3. Tooth Styling (Responsive Size) --- */
 .tooth {
     position: relative;
-    width: 64px; 
-    height: 64px; 
-    margin: 0 2px;
+    width: 42px; /* Kecilkan sikit dari 64px asal */
+    height: 42px; 
+    margin: 0 1px;
     box-sizing: border-box; 
-    border: 1px solid black; 
+    border: 1px solid #444; 
     cursor: pointer;
-    
-    /* 4x4 Grid Definition */
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr; 
     grid-template-rows: 1fr 1fr 1fr 1fr;
     background: white; 
 }
 
-/* --- 4. Surface Styling & Demarcation --- */
+/* --- 4. Surface Styling --- */
 .surface {
     position: relative;
     background: white;
@@ -71,90 +73,74 @@ h2, #score {
     z-index: 2; 
 }
 
-/* --- POSTERIOR TEETH (5 Surfaces) Grid Assignment & Demarcation --- */
-.tooth.posterior .surface.M { 
-    grid-area: 1 / 1 / 5 / 2;
-    border-right: 1px solid black; 
-} 
-.tooth.posterior .surface.D { 
-    grid-area: 1 / 4 / 5 / 5;
-    border-left: 1px solid black; 
-}
-.tooth.posterior .surface.B { 
-    grid-area: 1 / 2 / 2 / 4; 
-    border-bottom: 1px solid black; 
-}
-.tooth.posterior .surface.O { 
-    grid-area: 2 / 2 / 4 / 4; 
-    border-bottom: 1px solid black; 
-}
-.tooth.posterior .surface.L { 
-    grid-area: 4 / 2 / 5 / 4;
-}
+/* POSTERIOR */
+.tooth.posterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ccc; } 
+.tooth.posterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ccc; }
+.tooth.posterior .surface.B { grid-area: 1 / 2 / 2 / 4; border-bottom: 1px solid #ccc; }
+.tooth.posterior .surface.O { grid-area: 2 / 2 / 4 / 4; border-bottom: 1px solid #ccc; }
+.tooth.posterior .surface.L { grid-area: 4 / 2 / 5 / 4; }
 
-/* --- ANTERIOR TEETH (4 Surfaces) Grid Assignment & Demarcation --- */
-.tooth.anterior .surface.M { 
-    grid-area: 1 / 1 / 5 / 2;
-    border-right: 1px solid black; 
-} 
-.tooth.anterior .surface.D { 
-    grid-area: 1 / 4 / 5 / 5;
-    border-left: 1px solid black; 
-}
-.tooth.anterior .surface.B { 
-    grid-area: 1 / 2 / 3 / 4; 
-    border-bottom: 1px solid black; 
-}
-.tooth.anterior .surface.L { 
-    grid-area: 3 / 2 / 5 / 4;
-}
+/* ANTERIOR */
+.tooth.anterior .surface.M { grid-area: 1 / 1 / 5 / 2; border-right: 1px solid #ccc; } 
+.tooth.anterior .surface.D { grid-area: 1 / 4 / 5 / 5; border-left: 1px solid #ccc; }
+.tooth.anterior .surface.B { grid-area: 1 / 2 / 3 / 4; border-bottom: 1px solid #ccc; }
+.tooth.anterior .surface.L { grid-area: 3 / 2 / 5 / 4; }
 
-/* --- 5. Plaque Marking & Missing Status FIX --- */
-.surface.plaque {
-    background-color: #990099; 
-}
-.tooth.missing {
-    opacity: 0.5;
-    /* REMOVED: pointer-events: none; so that right-click to UNDO can register */
-}
-.tooth.missing .surface {
-    background-color: #a9a9a9 !important;
-}
+/* Status */
+.surface.plaque { background-color: #990099; } /* Ungu KintAlign */
+.tooth.missing { opacity: 0.3; }
+.tooth.missing .surface { background-color: #a9a9a9 !important; }
 
-/* --- 6. Numbering (Labels) --- */
+/* Labels */
 .number-label {
     position: absolute;
-    font-size: 10px;
+    font-size: 9px;
     width: 100%;
     text-align: center;
-    line-height: 1;
-    font-weight: normal;
+    font-weight: bold;
     z-index: 10;
 }
-.upper-arch .number-label { top: -15px; }
-.lower-arch .number-label { bottom: -15px; }
+.upper-arch .number-label { top: -18px; }
+.lower-arch .number-label { bottom: -18px; }
 
-/* --- Button Styling --- */
+/* --- Button & Score --- */
 #generateButton {
-    margin-top: 30px;
-    padding: 10px 20px;
+    margin-top: 20px;
+    padding: 12px 25px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     background-color: #4CAF50;
     color: white;
     border: none;
-    border-radius: 5px;
-    transition: background-color 0.2s;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-#generateButton:hover {
-    background-color: #45a049;
+
+#score {
+    margin-top: 15px; 
+    font-size: 22px; 
+    font-weight: bold;
+    color: darkred; 
+}
+
+.instruction {
+    font-size: 12px;
+    color: #666;
+    margin-top: 10px;
+    padding: 0 20px;
+}
+
+/* Mobile Fix for small screens */
+@media screen and (max-width: 400px) {
+    .tooth { width: 36px; height: 36px; }
+    .number-label { font-size: 8px; }
 }
 </style>
 </head>
 <body>
 
-<h2>Dental Plaque Chart (Click to Mark Plaque)</h2>
+<h2>Plaque Score Calculator</h2>
 
 <div class="dental-chart-container">
     <div class="arch upper-arch">
@@ -168,23 +154,19 @@ h2, #score {
 </div>
 
 <button id="generateButton" onclick="generateScore()">Generate Plaque Score</button>
-<h3 id="score">Plaque Score: 0%</h3>
+<h3 id="score">Score: 0%</h3>
 
-<div style="text-align: center; margin-top: 15px; font-size: 14px;">
-    **Right-click** on a tooth to toggle its **Missing** status (and to undo it).
-</div>
-<div style="text-align: center; margin-top: 5px; font-size: 14px; color: red;">
-    **Right-click once to mark missing, and right-click a second time on the gray area to restore.**
+<div class="instruction">
+    <strong>Tips:</strong> Klik kotak untuk tanda Plaque. <br>
+    <strong>Right-click</strong> (atau long press) untuk tanda gigi <strong>Missing</strong>.
 </div>
 
 <script>
 const toothData = {
-    // Q1: DOM order 11-18. CSS reverses to 18-11.
-    'q1': [11, 12, 13, 14, 15, 16, 17, 18], 
+    'q1': [18, 17, 16, 15, 14, 13, 12, 11], 
     'q2': [21, 22, 23, 24, 25, 26, 27, 28],
     'q3': [31, 32, 33, 34, 35, 36, 37, 38],
-    // Q4: DOM order 41-48. CSS reverses to 48-41.
-    'q4': [41, 42, 43, 44, 45, 46, 47, 48] 
+    'q4': [48, 47, 46, 45, 44, 43, 42, 41] 
 };
 
 const posteriorTeeth = [14, 15, 16, 17, 18, 24, 25, 26, 27, 28, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48];
@@ -193,19 +175,13 @@ const surfacesAnt = ['M', 'D', 'B', 'L'];
 
 let validSurfaces = 0; 
 
-function isPosterior(tNum) {
-    return posteriorTeeth.includes(tNum);
-}
-
-function getSurfacesForTooth(tNum) {
-    return isPosterior(tNum) ? surfacesPost : surfacesAnt;
-}
+function isPosterior(tNum) { return posteriorTeeth.includes(tNum); }
+function getSurfacesForTooth(tNum) { return isPosterior(tNum) ? surfacesPost : surfacesAnt; }
 
 function generateChart() {
-    const quadrants = document.querySelectorAll('.quadrant');
-
-    quadrants.forEach(quad => {
-        const teeth = toothData[quad.id];
+    Object.keys(toothData).forEach(quadId => {
+        const quad = document.getElementById(quadId);
+        const teeth = toothData[quadId];
 
         teeth.forEach(tNum => {
             const isPost = isPosterior(tNum);
@@ -223,13 +199,14 @@ function generateChart() {
             surfaces.forEach(key => {
                 const surfaceDiv = document.createElement('div');
                 surfaceDiv.className = `surface ${key}`;
-                surfaceDiv.id = `${tNum}-${key}`;
-                // Clicks only toggle the plaque class
-                surfaceDiv.onclick = () => surfaceDiv.classList.toggle('plaque');
+                surfaceDiv.onclick = () => {
+                    if(!toothDiv.classList.contains('missing')) {
+                        surfaceDiv.classList.toggle('plaque');
+                    }
+                };
                 toothDiv.appendChild(surfaceDiv);
             });
 
-            // The right-click listener is on the main tooth div
             toothDiv.oncontextmenu = (e) => {
                 e.preventDefault(); 
                 toggleMissing(tNum);
@@ -239,18 +216,13 @@ function generateChart() {
             quad.appendChild(toothDiv);
         });
     });
-    // Initial score display
     generateScore();
 }
 
-// Function triggered by the button
 function generateScore() {
-    // 1. Get the numerator by counting all surfaces marked 'plaque' currently in the DOM
-    const surfacesWithPlaque = document.querySelectorAll('.surface.plaque').length;
-    
-    // 2. Calculate the score using the current validSurfaces count
-    let percent = validSurfaces === 0 ? 0 : Math.round((surfacesWithPlaque / validSurfaces) * 100);
-    document.getElementById('score').innerText = `Plaque Score: ${percent}%`;
+    const plaqueCount = document.querySelectorAll('.surface.plaque').length;
+    let percent = validSurfaces === 0 ? 0 : Math.round((plaqueCount / validSurfaces) * 100);
+    document.getElementById('score').innerText = `Score: ${percent}%`;
 }
 
 function toggleMissing(toothNum) {
@@ -258,25 +230,14 @@ function toggleMissing(toothNum) {
     const surfaceCount = getSurfacesForTooth(toothNum).length;
     
     if (toothDiv.classList.contains('missing')) {
-        // --- RESTORE tooth (undo missing) ---
         toothDiv.classList.remove('missing');
         validSurfaces += surfaceCount; 
-        
     } else {
-        // --- MARK AS MISSING ---
         const surfaces = toothDiv.querySelectorAll('.surface');
-        
-        // 1. Clean up plaque 
-        surfaces.forEach(s => {
-            s.classList.remove('plaque');
-        });
-        
-        // 2. Mark the tooth as missing and adjust the denominator
+        surfaces.forEach(s => s.classList.remove('plaque'));
         toothDiv.classList.add('missing');
         validSurfaces -= surfaceCount; 
     }
-    
-    // No score update here, the button must be pressed.
 }
 
 generateChart();
