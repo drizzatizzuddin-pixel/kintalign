@@ -1,9 +1,9 @@
-<!DOCTYPE html>
++<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plaque Score Generator</title>
+<title>Plaque Score Generator (Auto Scale)</title>
 
 <style>
 body { 
@@ -20,43 +20,40 @@ body {
     color: darkred; 
 }
 
-/* CENTER FIX */
-.dental-chart-container {
+/* WRAPPER (IMPORTANT FOR GOOGLE SITES) */
+.scale-wrapper {
     width: 100%;
-    max-width: 1000px;
-    margin: 20px auto;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+/* CHART */
+.dental-chart-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
+    transform-origin: top center;
 }
 
-.arch { 
-    display: flex; 
-    justify-content: center;
-    gap: 10px;
-}
-
-.quadrant { 
-    display: flex; 
-    gap: 2px;
-}
-
+/* layout */
+.arch { display: flex; gap: 10px; }
+.quadrant { display: flex; gap: 2px; }
 .quadrant.right { flex-direction: row-reverse; }
 
-/* Tooth */
+/* tooth */
 .tooth {
     position: relative;
-    width: min(8vw, 64px);
-    height: min(8vw, 64px);
+    width: 64px;
+    height: 64px;
     border: 1px solid black;
     display: grid;
     grid-template-columns: repeat(4,1fr);
     grid-template-rows: repeat(4,1fr);
-    background: white;
 }
 
-/* LABEL FIX (click-through) */
+/* label fix */
 .number-label {
     position: absolute;
     top: 2px;
@@ -64,15 +61,11 @@ body {
     text-align: center;
     font-size: 9px;
     font-weight: bold;
-    z-index: 10;
-    pointer-events: none; /* 🔥 IMPORTANT FIX */
+    pointer-events: none;
 }
 
 /* surfaces */
-.surface { 
-    background: white; 
-    cursor: pointer;
-}
+.surface { cursor: pointer; }
 
 /* posterior */
 .tooth.posterior .M { grid-area: 1 / 1 / 5 / 2; border-right:1px solid black;}
@@ -92,7 +85,6 @@ body {
 .tooth.missing { opacity:0.5; }
 .tooth.missing .surface { background:#aaa !important; }
 
-/* Button */
 button {
     margin-top: 20px;
     padding: 8px 16px;
@@ -106,14 +98,16 @@ button {
 
 <h2>Dental Plaque Chart</h2>
 
-<div class="dental-chart-container">
-    <div class="arch">
-        <div class="quadrant right" id="q1"></div>
-        <div class="quadrant left" id="q2"></div>
-    </div>
-    <div class="arch">
-        <div class="quadrant right" id="q4"></div>
-        <div class="quadrant left" id="q3"></div>
+<div class="scale-wrapper">
+    <div class="dental-chart-container" id="chart">
+        <div class="arch">
+            <div class="quadrant right" id="q1"></div>
+            <div class="quadrant left" id="q2"></div>
+        </div>
+        <div class="arch">
+            <div class="quadrant right" id="q4"></div>
+            <div class="quadrant left" id="q3"></div>
+        </div>
     </div>
 </div>
 
@@ -167,7 +161,6 @@ function generateChart(){
                 tooth.appendChild(d);
             });
 
-            // HOLD
             tooth.addEventListener("mousedown",(e)=>{
                 if(e.button!==0) return;
                 isHolding=false;
@@ -197,6 +190,19 @@ function generateChart(){
     });
 }
 
+/* AUTO SCALE FUNCTION */
+function autoScale(){
+    const wrapper=document.querySelector('.scale-wrapper');
+    const chart=document.getElementById('chart');
+
+    const wrapperWidth=wrapper.offsetWidth;
+    const chartWidth=chart.scrollWidth;
+
+    const scale=Math.min(1, wrapperWidth/chartWidth);
+    chart.style.transform=`scale(${scale})`;
+}
+
+/* toggle missing */
 function toggleMissing(t){
     const tooth=document.getElementById(`t${t}`);
     const count=getSurf(t).length;
@@ -217,7 +223,10 @@ function generateScore(){
     document.getElementById('score').innerText=`Plaque Score: ${percent}%`;
 }
 
+/* INIT */
 generateChart();
+window.addEventListener("load", autoScale);
+window.addEventListener("resize", autoScale);
 </script>
 
 </body>
